@@ -9,7 +9,7 @@ SOURCE_FOLDER="${1:-}"
 FILENAME="${2:-}"
 
 REMOTE="${DTD_REMOTE:-gdrive:Music}"
-CONFIG="${DTD_CONFIG:-/var/lib/deemix/.config/rclone/rclone.conf}"
+CONFIG="${DTD_CONFIG:-/var/lib/deemix/.rclone.conf}"
 RCLONE="${DTD_RCLONE:-/usr/bin/rclone}"
 SOURCE_ROOT="${DTD_SOURCE_ROOT:-/srv/deemix/downloads}"
 LOG_FILE="${DTD_LOG:-/var/log/deemix-to-drive.log}"
@@ -170,9 +170,15 @@ run_transfer() {
 	[[ "$DEBUG" == "1" ]] && signal=QUIT
 
 	if [[ -d "$SOURCE" ]]; then
-		timeout --signal="$signal" --kill-after=60 "$HARD_TIMEOUT" \
-			"$RCLONE" "$MODE" "$SOURCE" "$DEST" \
-			"${RCLONE_OPTIONS[@]}" --delete-empty-src-dirs || rc=$?
+		if [[ "$MODE" == "move" ]]; then
+			timeout --signal="$signal" --kill-after=60 "$HARD_TIMEOUT" \
+				"$RCLONE" move "$SOURCE" "$DEST" \
+				"${RCLONE_OPTIONS[@]}" --delete-empty-src-dirs || rc=$?
+		else
+			timeout --signal="$signal" --kill-after=60 "$HARD_TIMEOUT" \
+				"$RCLONE" copy "$SOURCE" "$DEST" \
+				"${RCLONE_OPTIONS[@]}" || rc=$?
+		fi
 	else
 		verb=moveto
 		[[ "$MODE" == "copy" ]] && verb=copyto
