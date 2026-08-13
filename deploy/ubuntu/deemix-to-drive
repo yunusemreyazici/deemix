@@ -1,0 +1,233 @@
+#!/usr/bin/env bash
+# Upload a completed deemix track or collection to Google Drive with rclone.
+# deemix calls this as:
+#   /usr/local/bin/deemix-to-drive %folder% %filename%
+
+set -Eeuo pipefail
+
+SOURCE_FOLDER="${1:-}"
+FILENAME="${2:-}"
+
+REMOTE="${DTD_REMOTE:-gdrive:Music}"
+CONFIG="${DTD_CONFIG:-/var/lib/deemix/.config/rclone/rclone.conf}"
+RCLONE="${DTD_RCLONE:-/usr/bin/rclone}"
+SOURCE_ROOT="${DTD_SOURCE_ROOT:-/srv/deemix/downloads}"
+LOG_FILE="${DTD_LOG:-/var/log/deemix-to-drive.log}"
+LOCK_FILE="${DTD_LOCK:-/var/lib/deemix/deemix-to-drive.lock}"
+MODE="${DTD_MODE:-move}"
+
+MAX_ATTEMPTS="${DTD_ATTEMPTS:-6}"
+LOCK_TIMEOUT="${DTD_LOCK_TIMEOUT:-21600}"
+MAX_DURATION="${DTD_MAX_DURATION:-3h}"
+HARD_TIMEOUT="${DTD_HARD_TIMEOUT:-4h}"
+CHUNK_SIZE="${DTD_CHUNK_SIZE:-32M}"
+LOW_LEVEL_RETRIES="${DTD_LOW_LEVEL_RETRIES:-10}"
+TPS_LIMIT="${DTD_TPS_LIMIT:-5}"
+TPS_BURST="${DTD_TPS_BURST:-1}"
+RETRY_BASE="${DTD_RETRY_BASE:-300}"
+LOG_MAX_BYTES="${DTD_LOG_MAX_BYTES:-52428800}"
+DEBUG="${DTD_DEBUG:-0}"
+
+EX_OK=0
+EX_USAGE=64
+EX_ENV=65
+EX_QUOTA=66
+EX_FAILED=67
+EX_BUSY=68
+EX_AMBIGUOUS=69
+
+early_error() {
+	printf 'deemix-to-drive: %s\n' "$*" >&2
+	exit "$EX_ENV"
+}
+
+[[ -n "$SOURCE_FOLDER" ]] || early_error "kaynak klasör verilmedi"
+[[ -x "$RCLONE" ]] || early_error "rclone çalıştırılabilir değil: $RCLONE"
+[[ -f "$CONFIG" ]] || early_error "rclone config bulunamadı: $CONFIG"
+command -v flock >/dev/null 2>&1 || early_error "flock bulunamadı (util-linux kurun)"
+command -v timeout >/dev/null 2>&1 || early_error "timeout bulunamadı (coreutils kurun)"
+
+case "$MODE" in
+	move | copy) ;;
+	*) early_error "DTD_MODE yalnızca move veya copy olabilir" ;;
+esac
+
+if [[ -n "$FILENAME" ]]; then
+	SOURCE="${SOURCE_FOLDER%/}/${FILENAME#/}"
+else
+	SOURCE="${SOURCE_FOLDER%/}"
+fi
+
+[[ -e "$SOURCE_ROOT" ]] || early_error "indirme kökü bulunamadı: $SOURCE_ROOT"
+[[ -e "$SOURCE" ]] || {
+	printf 'deemix-to-drive: kaynak bulunamadı: %s\n' "$SOURCE" >&2
+	exit "$EX_USAGE"
+}
+
+SOURCE_ROOT="$(realpath -- "$SOURCE_ROOT")"
+SOURCE="$(realpath -- "$SOURCE")"
+
+# A mistaken callback must never move the download root or another system path.
+case "$SOURCE" in
+	"$SOURCE_ROOT")
+		printf 'deemix-to-drive: indirme kökünün tamamı taşınmayacak: %s\n' "$SOURCE" >&2
+		exit "$EX_USAGE"
+		;;
+	"$SOURCE_ROOT"/*) ;;
+	*)
+		printf 'deemix-to-drive: kaynak izin verilen kökün dışında: %s\n' "$SOURCE" >&2
+		exit "$EX_USAGE"
+		;;
+esac
+
+mkdir -p -- "$(dirname -- "$LOG_FILE")" "$(dirname -- "$LOCK_FILE")" \
+	2>/dev/null || true
+touch -- "$LOG_FILE" 2>/dev/null || early_error "log dosyasına yazılamıyor: $LOG_FILE"
+
+rotate_log() {
+	[[ -f "$LOG_FILE" ]] || return 0
+	local size
+	size="$(stat -c %s "$LOG_FILE" 2>/dev/null || printf '0')"
+	((size < LOG_MAX_BYTES)) && return 0
+	rm -f -- "$LOG_FILE.3"
+	[[ -f "$LOG_FILE.2" ]] && mv -f -- "$LOG_FILE.2" "$LOG_FILE.3"
+	[[ -f "$LOG_FILE.1" ]] && mv -f -- "$LOG_FILE.1" "$LOG_FILE.2"
+	mv -f -- "$LOG_FILE" "$LOG_FILE.1"
+	touch -- "$LOG_FILE"
+}
+
+rotate_log
+exec >>"$LOG_FILE" 2>&1
+
+log() {
+	printf '[%s] [PID:%s] %s\n' "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$$" "$*"
+}
+
+trap 'rc=$?; log "İşlem bitti (çıkış kodu: $rc)"; log "========================================"' EXIT
+trap 'rc=$?; log "Beklenmeyen hata (satır ${BASH_LINENO[0]}, kod $rc)"' ERR
+
+log "========================================"
+log "Drive aktarımı başladı"
+log "Kaynak: $SOURCE"
+log "Hedef kök: $REMOTE"
+log "Mod: $MODE"
+
+exec 9>"$LOCK_FILE" || {
+	log "HATA: kilit dosyası açılamadı: $LOCK_FILE"
+	exit "$EX_ENV"
+}
+
+if ! flock -x -w "$LOCK_TIMEOUT" 9; then
+	log "HATA: ${LOCK_TIMEOUT}s içinde aktarım kilidi alınamadı"
+	exit "$EX_BUSY"
+fi
+
+# The source may have been moved by an earlier callback while this job waited.
+if [[ ! -e "$SOURCE" ]]; then
+	log "Kaynak artık yok; daha önce aktarılmış olabilir: $SOURCE"
+	exit "$EX_OK"
+fi
+
+NAME="$(basename -- "$SOURCE" | tr -d '\000-\037')"
+[[ -n "$NAME" ]] || {
+	log "HATA: hedef adı boş"
+	exit "$EX_USAGE"
+}
+DEST="${REMOTE%/}/$NAME"
+log "Drive yolu: $DEST"
+
+LOG_LEVEL="INFO"
+[[ "$DEBUG" == "1" ]] && LOG_LEVEL="DEBUG"
+
+RCLONE_OPTIONS=(
+	--config="$CONFIG"
+	--transfers 1
+	--checkers 2
+	--tpslimit "$TPS_LIMIT"
+	--tpslimit-burst "$TPS_BURST"
+	--drive-chunk-size "$CHUNK_SIZE"
+	--retries 3
+	--retries-sleep 30s
+	--low-level-retries "$LOW_LEVEL_RETRIES"
+	--timeout 5m
+	--contimeout 1m
+	--expect-continue-timeout 30s
+	--max-duration "$MAX_DURATION"
+	--stats 30s
+	--stats-one-line
+	--log-level "$LOG_LEVEL"
+)
+
+rclone_help="$("$RCLONE" help flags 2>/dev/null || true)"
+if [[ "$rclone_help" == *"--drive-stop-on-upload-limit"* ]]; then
+	RCLONE_OPTIONS+=(--drive-stop-on-upload-limit)
+else
+	log "UYARI: rclone eski; --drive-stop-on-upload-limit desteklenmiyor"
+fi
+
+run_transfer() {
+	local rc=0 signal=TERM verb
+	[[ "$DEBUG" == "1" ]] && signal=QUIT
+
+	if [[ -d "$SOURCE" ]]; then
+		timeout --signal="$signal" --kill-after=60 "$HARD_TIMEOUT" \
+			"$RCLONE" "$MODE" "$SOURCE" "$DEST" \
+			"${RCLONE_OPTIONS[@]}" --delete-empty-src-dirs || rc=$?
+	else
+		verb=moveto
+		[[ "$MODE" == "copy" ]] && verb=copyto
+		timeout --signal="$signal" --kill-after=60 "$HARD_TIMEOUT" \
+			"$RCLONE" "$verb" "$SOURCE" "$DEST" \
+			"${RCLONE_OPTIONS[@]}" || rc=$?
+	fi
+
+	return "$rc"
+}
+
+verify_destination() {
+	if [[ "$MODE" == "copy" && -e "$SOURCE" ]]; then
+		"$RCLONE" check "$SOURCE" "$DEST" --config="$CONFIG" --one-way \
+			--log-level NOTICE || log "UYARI: rclone check farklılık bildirdi"
+	else
+		"$RCLONE" size "$DEST" --config="$CONFIG" --log-level NOTICE \
+			|| log "UYARI: hedef boyutu okunamadı"
+	fi
+}
+
+for ((attempt = 1; attempt <= MAX_ATTEMPTS; attempt++)); do
+	log "Deneme $attempt/$MAX_ATTEMPTS başladı"
+	rc=0
+	run_transfer || rc=$?
+
+	if ((rc == 0)); then
+		log "Yükleme başarıyla tamamlandı"
+		verify_destination
+		exit "$EX_OK"
+	fi
+
+	log "rclone çıkış kodu: $rc"
+	case "$rc" in
+		124 | 131 | 137) log "UYARI: aktarım $HARD_TIMEOUT içinde bitmedi" ;;
+		10) log "UYARI: rclone azami süreyi doldurdu: $MAX_DURATION" ;;
+	esac
+
+	if ((rc == 7 || rc == 8)); then
+		log "HATA: Drive yükleme kotası veya ölümcül rclone hatası"
+		exit "$EX_QUOTA"
+	fi
+
+	if [[ ! -e "$SOURCE" ]]; then
+		log "UYARI: rclone hata döndürdü fakat kaynak artık yok; hedef doğrulanacak"
+		verify_destination
+		exit "$EX_AMBIGUOUS"
+	fi
+
+	if ((attempt < MAX_ATTEMPTS)); then
+		wait_seconds=$((attempt * RETRY_BASE))
+		log "${wait_seconds}s sonra tekrar denenecek"
+		sleep "$wait_seconds"
+	fi
+done
+
+log "HATA: bütün yükleme denemeleri başarısız; kaynak yerelde bırakıldı: $SOURCE"
+exit "$EX_FAILED"
