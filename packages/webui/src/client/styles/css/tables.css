@@ -1,22 +1,26 @@
 .table {
 	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
 	-webkit-border-horizontal-spacing: 0px;
 	-webkit-border-vertical-spacing: 0px;
 }
 .table tbody tr:not(.table__row-no-highlight):hover {
-	background: var(--table-highlight);
+	background: var(--surface-hover);
 	cursor: default;
 }
 .table tr {
 	transition: background-color 175ms ease-in-out;
-	background: var(--table-bg);
+	background: transparent;
 }
 .table tr:nth-child(even) {
-	transition: background-color 175ms ease-in-out;
-	background: var(--table-zebra);
+	background: transparent;
 }
 .table tr:not(:last-child) {
-	border-bottom: 1px solid var(--table-highlight);
+	border-bottom: 0;
+}
+.table tbody tr > td {
+	border-bottom: 1px solid var(--border-subtle);
 }
 .table td,
 .table th {
@@ -38,13 +42,13 @@
 	content: "\25bc";
 }
 .table td {
-	padding: 7px 10px;
+	padding: 10px 12px;
 }
 .table td:first-child {
-	padding: 7px 10px 7px 20px;
+	padding-left: 12px;
 }
 .table td:last-child {
-	padding: 7px 20px 7px 10px;
+	padding-right: 12px;
 }
 .table td img {
 	vertical-align: middle;
@@ -52,10 +56,13 @@
 
 /* === Tracks Table === */
 .table--tracks {
-	border-collapse: collapse;
+	border-collapse: separate;
 }
 .table--tracks thead {
-	border-bottom: 2px solid var(--table-highlight);
+	color: var(--text-muted);
+	font-size: 0.76rem;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
 }
 .table--tracks tr:first-child td:first-child {
 	border-top-left-radius: 3px;
@@ -72,18 +79,21 @@
 
 /* === Tracklist Table === */
 .table--tracklist thead {
-	border-bottom: 2px solid var(--table-highlight);
+	color: var(--text-muted);
+	font-size: 0.76rem;
+	letter-spacing: 0.05em;
 	text-transform: capitalize;
 }
 .table--tracklist th {
-	padding: 7px 10px;
+	padding: 7px 12px;
 	height: 45px;
+	border-bottom: 1px solid var(--border-strong);
 }
 .table--tracklist th:first-child {
-	padding: 7px 10px 7px 20px;
+	padding-left: 12px;
 }
 .table--tracklist th:last-child {
-	padding: 7px 20px 7px 10px;
+	padding-right: 12px;
 }
 .table--tracklist td {
 	height: 35px;
@@ -139,4 +149,27 @@
 .table--tracklist .cursor-pointer:hover,
 .table--charts .cursor-pointer:hover {
 	text-decoration: underline;
+}
+
+@media (max-width: 767px) {
+	.table {
+		display: block;
+		overflow-x: auto;
+		font-size: 0.84rem;
+		white-space: nowrap;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.table td {
+		padding: 9px 8px;
+	}
+
+	.table .table__icon--big {
+		width: 42px;
+	}
+
+	.track_row > td > a > img {
+		width: 44px;
+		height: 44px;
+	}
 }

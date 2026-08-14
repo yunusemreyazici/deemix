@@ -59,6 +59,14 @@ const finishedWithFails = computed(() => {
 const isDeterminateStatus = computed(() =>
 	possibleStates.includes(queueItem.status)
 );
+const isComplete = computed(() => queueItem.status === "download finished");
+const progressText = computed(() => {
+	if (isComplete.value) return "100%";
+	if (queueItem.status === "converting") {
+		return `${Math.max(0, Math.round(100 - queueItem.conversion))}%`;
+	}
+	return `${Math.max(0, Math.round(queueItem.progress || 0))}%`;
+});
 const barClass = computed(() => ({
 	converting: queueItem.status === "converting",
 	indeterminate: !isDeterminateStatus.value,
@@ -71,9 +79,6 @@ const barStyle = computed(() => {
 	if (hasFails.value || hasErrors.value) {
 		// Orange
 		backgroundColor = "hsl(33, 100%, 47%)";
-	} else {
-		// Green
-		backgroundColor = "hsl(150, 76%, 34%)";
 	}
 
 	if (allFailed.value) {
@@ -115,6 +120,9 @@ const resultIconText = computed(() => {
 
 	return text;
 });
+const canInteract = computed(
+	() => finishedWithFails.value || resultIconText.value === "delete_forever"
+);
 
 const generateLink = computed(() => {
 	switch (queueItem.type) {
@@ -173,43 +181,40 @@ function onResultIconClick() {
 </script>
 
 <template>
-	<div class="download-object" :data-link-only="generateLink">
+	<article
+		class="download-object"
+		:class="{ 'is-complete': isComplete, 'has-errors': hasFails || hasErrors }"
+		:data-link-only="generateLink"
+	>
 		<div class="download-info">
-			<div class="coverart relative rounded">
-				<img
-					width="75px"
-					:src="queueItem.cover"
-					:alt="`Cover ${queueItem.title}`"
-				/>
+			<div class="download-cover">
+				<img :src="queueItem.cover" :alt="`Cover ${queueItem.title}`" />
 				<span v-if="showTags" class="tag">{{ bitrateText }}</span>
 			</div>
 
 			<div class="download-info-data">
-				<span class="download-line">
+				<div class="download-title-row">
 					<i v-if="queueItem.explicit" class="material-icons explicit-icon"
 						>explicit</i
 					>
-					{{ queueItem.title }}
-				</span>
-				<span class="download-slim-separator"> - </span>
-				<span>{{ queueItem.artist }}</span>
-			</div>
-
-			<div class="download-info-status" style="text-align: center">
-				<span class="download-line">
-					{{ queueItem.downloaded + queueItem.failed }}/{{ queueItem.size }}
-				</span>
-
-				<span
-					v-if="hasFails"
-					class="flex items-center"
-					:class="{ 'cursor-pointer': hasFails }"
-					style="justify-content: center"
-					@click="hasFails ? emit('show-errors', queueItem) : null"
-				>
-					{{ queueItem.failed }}
-					<i class="material-icons">error_outline</i>
-				</span>
+					<strong>{{ queueItem.title }}</strong>
+				</div>
+				<span class="download-artist">{{ queueItem.artist }}</span>
+				<div class="download-meta">
+					<span
+						>{{ queueItem.downloaded + queueItem.failed }}/{{
+							queueItem.size
+						}}</span
+					>
+					<button
+						v-if="hasFails"
+						type="button"
+						class="download-error-button"
+						@click="emit('show-errors', queueItem)"
+					>
+						<i class="material-icons">error_outline</i>{{ queueItem.failed }}
+					</button>
+				</div>
 			</div>
 		</div>
 
@@ -217,112 +222,198 @@ function onResultIconClick() {
 			<div class="progress">
 				<div :class="barClass" :style="barStyle"></div>
 			</div>
-			<i
+			<span class="progress-label">{{ progressText }}</span>
+			<button
 				v-if="!isLoading"
-				class="material-icons queue_icon"
-				:class="{
-					'cursor-pointer':
-						finishedWithFails || resultIconText === 'delete_forever',
-				}"
+				type="button"
+				class="queue-action"
+				:class="{ interactive: canInteract }"
+				:disabled="!canInteract"
 				@mouseover="hovered = true"
 				@mouseleave="hovered = false"
 				@click="onResultIconClick"
 			>
-				{{ hovered && finishedWithFails ? "refresh" : resultIconText }}
-			</i>
+				<i class="material-icons">{{
+					hovered && finishedWithFails ? "refresh" : resultIconText
+				}}</i>
+			</button>
 			<div v-else class="circle-loader"></div>
 		</div>
-	</div>
+	</article>
 </template>
 
 <style>
 .download-object {
-	padding-bottom: 8px;
+	padding: 12px 0 14px;
+	border-bottom: 1px solid var(--border-subtle);
 }
-.download-object .download-info {
+
+.download-info {
 	display: flex;
 	align-items: center;
+	gap: 11px;
 }
-.download-object .download-info .coverart {
-	height: 75px;
-	width: 75px;
-	flex: 0 0 75px;
+
+.download-cover {
+	position: relative;
+	width: 64px;
+	height: 64px;
+	flex: 0 0 64px;
+	border: 1px solid var(--border-subtle);
+	border-radius: 9px;
 	overflow: hidden;
+	background: var(--secondary-background);
 }
-.download-object .download-info .coverart .tag {
+
+.download-cover img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.download-cover .tag {
 	position: absolute;
-	bottom: 0px;
-	right: 0px;
+	right: 4px;
+	bottom: 4px;
+	padding: 2px 5px;
+	border-radius: 4px;
+	color: white;
+	font-size: 0.58rem;
+	font-weight: 750;
 }
-.download-object .download-info .download-line {
-	display: block;
+
+.download-info-data {
+	min-width: 0;
+	flex: 1;
 }
-.download-object .download-info .download-line .explicit-icon {
-	vertical-align: bottom;
+
+.download-title-row {
+	display: flex;
+	min-width: 0;
+	align-items: center;
+	gap: 0.3rem;
 }
-.download-object .download-info .download-slim-separator {
-	display: none;
-}
-.download-object .download-info-data {
-	flex: 1 50%;
-	margin-left: 8px;
+
+.download-title-row strong {
 	overflow: hidden;
+	font-size: 0.88rem;
+	font-weight: 680;
+	line-height: 1.3;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
-.download-object .download-info-status {
-	flex: 1 15%;
-	margin-left: 8px;
-	width: 80px;
+
+.explicit-icon {
+	flex: 0 0 auto;
+	font-size: 1rem !important;
+	color: var(--text-muted);
 }
-.download-object > .download-bar {
+
+.download-artist {
+	display: block;
+	margin-top: 0.16rem;
+	overflow: hidden;
+	color: var(--text-muted);
+	font-size: 0.76rem;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.download-meta {
 	display: flex;
 	align-items: center;
-	height: 24px;
-}
-.download-object > .download-bar > .queue_icon {
-	margin-left: 8px;
-}
-.download-object > .download-bar > .progress {
-	margin: 0;
+	gap: 0.5rem;
+	margin-top: 0.34rem;
+	color: var(--text-muted);
+	font-size: 0.69rem;
 }
 
-#download_list:not(.slim) .download-line {
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
+.download-error-button {
+	display: flex;
+	align-items: center;
+	gap: 0.18rem;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: hsl(33, 100%, 58%);
+	cursor: pointer;
 }
 
-#download_list.slim > .download-object .download-info {
-	display: block;
+.download-error-button i {
+	font-size: 0.9rem;
 }
-#download_list.slim > .download-object .download-info .coverart {
+
+.download-object > .download-bar {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto 32px;
+	align-items: center;
+	gap: 0.55rem;
+	margin-top: 0.72rem;
+}
+
+.progress-label {
+	min-width: 32px;
+	color: var(--text-muted);
+	font-size: 0.67rem;
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+}
+
+.queue-action {
+	display: grid;
+	width: 32px;
+	height: 32px;
+	place-items: center;
+	padding: 0;
+	border: 0;
+	border-radius: 7px;
+	background: transparent;
+	color: var(--text-muted);
+}
+
+.queue-action.interactive {
+	cursor: pointer;
+}
+
+.queue-action.interactive:hover {
+	background: var(--surface-hover);
+	color: var(--foreground);
+}
+
+.queue-action i {
+	font-size: 1.15rem;
+}
+
+#download_list.slim .download-cover {
 	display: none;
 }
-#download_list.slim > .download-object .download-info .download-line {
-	display: inline-block;
-}
-#download_list.slim > .download-object .download-info .download-slim-separator {
-	display: inline-block;
-}
-#download_list.slim > .download-object .download-info-data {
-	width: calc(80% - 16px);
-	display: inline-block;
-	padding-left: 0;
-}
-#download_list.slim > .download-object .download-info-status {
-	width: 20%;
-	display: block;
-	float: right;
+
+#download_list.slim .download-object {
+	padding: 10px 0;
 }
 
 .progress {
 	position: relative;
-	height: 4px;
+	height: 3px;
 	display: block;
 	width: 100%;
-	background-color: var(--secondary-background);
-	border-radius: 2px;
-	margin: 0.5rem 0 1rem 0;
+	background-color: var(--border-subtle);
+	border-radius: 999px;
+	margin: 0;
 	overflow: hidden;
+}
+
+@media (max-width: 767px) {
+	.download-object {
+		padding: 11px 0 13px;
+	}
+
+	.download-cover {
+		width: 58px;
+		height: 58px;
+		flex-basis: 58px;
+	}
 }
 .progress .determinate {
 	position: absolute;

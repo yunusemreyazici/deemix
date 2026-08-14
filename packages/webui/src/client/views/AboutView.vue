@@ -19,38 +19,43 @@ const updateUrl = computed(() => {
 </script>
 
 <template>
-	<div class="mb-8 flex flex-col items-start gap-6">
-		<h1 class="text-5xl capitalize">{{ t("sidebar.about") }}</h1>
+	<div class="about-page page-shell">
+		<header class="page-heading">
+			<h1 class="capitalize">{{ t("sidebar.about") }}</h1>
+		</header>
 
-		<div
-			class="inline-flex rounded-full px-4 py-2"
-			:class="{ 'bg-green-500': isOnline, 'bg-red-500': !isOnline }"
-		>
+		<div class="status-chip" :class="{ online: isOnline, offline: !isOnline }">
+			<i class="material-icons">{{ isOnline ? "cloud_done" : "cloud_off" }}</i>
 			<span class="uppercase-first-letter text-sm">
 				{{ t(`about.appStatus.${isOnline ? "online" : "offline"}`) }}
 			</span>
 		</div>
 
-		<div class="list-none pl-0">
-			<p>
-				{{ t("about.updates.currentWebuiVersion") }}:
-				{{ appInfo.webuiVersion || t("about.updates.versionNotAvailable") }}
-			</p>
-			<p v-if="appInfo.guiVersion">
-				{{ t("about.updates.currentGuiVersion") }}:
-				{{ appInfo.guiVersion || t("about.updates.versionNotAvailable") }}
-			</p>
-			<p>{{ t("about.updates.deemixVersion") }}: {{ appInfo.deemixVersion }}</p>
-			<i18n-t
-				v-if="appInfo.updateAvailable && appInfo.latestVersion"
-				keypath="about.updates.updateAvailable"
-				tag="p"
-			>
-				<template #version>
-					<a :href="updateUrl" target="_blank">{{ appInfo.latestVersion }}</a>
-				</template>
-			</i18n-t>
-		</div>
+		<section class="about-card version-list">
+			<div class="about-card-icon"><i class="material-icons">info</i></div>
+			<div>
+				<p>
+					{{ t("about.updates.currentWebuiVersion") }}:
+					{{ appInfo.webuiVersion || t("about.updates.versionNotAvailable") }}
+				</p>
+				<p v-if="appInfo.guiVersion">
+					{{ t("about.updates.currentGuiVersion") }}:
+					{{ appInfo.guiVersion || t("about.updates.versionNotAvailable") }}
+				</p>
+				<p>
+					{{ t("about.updates.deemixVersion") }}: {{ appInfo.deemixVersion }}
+				</p>
+				<i18n-t
+					v-if="appInfo.updateAvailable && appInfo.latestVersion"
+					keypath="about.updates.updateAvailable"
+					tag="p"
+				>
+					<template #version>
+						<a :href="updateUrl" target="_blank">{{ appInfo.latestVersion }}</a>
+					</template>
+				</i18n-t>
+			</div>
+		</section>
 
 		<a href="https://ko-fi.com/L3L71IQN1F" target="_blank">
 			<img
@@ -62,7 +67,7 @@ const updateUrl = computed(() => {
 			/>
 		</a>
 
-		<div>
+		<section class="about-card about-copy">
 			<h2 class="text-3xl">
 				{{ t("about.titles.bugReportsContributing") }}
 			</h2>
@@ -86,9 +91,9 @@ const updateUrl = computed(() => {
 				</svg>
 				{{ t("about.officialRepo") }}
 			</a>
-		</div>
+		</section>
 
-		<ul>
+		<ul class="about-notes">
 			<li>
 				{{ t("about.beforeReporting") }}
 			</li>
@@ -126,6 +131,76 @@ const updateUrl = computed(() => {
 </template>
 
 <style scoped>
+.about-page {
+	max-width: 860px;
+}
+
+.status-chip {
+	display: inline-flex;
+	width: fit-content;
+	align-items: center;
+	gap: 0.45rem;
+	padding: 0.45rem 0.75rem;
+	border: 1px solid var(--border-subtle);
+	border-radius: 999px;
+	font-weight: 650;
+}
+
+.status-chip i {
+	font-size: 1rem;
+}
+
+.status-chip.online {
+	color: hsl(151, 67%, 55%);
+}
+
+.status-chip.offline {
+	color: hsl(3, 82%, 66%);
+}
+
+.about-card {
+	display: flex;
+	align-items: flex-start;
+	gap: 1rem;
+	padding: 1.35rem;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--radius-lg);
+	background: var(--secondary-background);
+}
+
+.about-card-icon {
+	display: grid;
+	width: 42px;
+	height: 42px;
+	flex: 0 0 42px;
+	place-items: center;
+	border-radius: var(--radius-md);
+	background: var(--surface-hover);
+	color: var(--primary-color);
+}
+
+.version-list p {
+	margin: 0.22rem 0;
+	color: var(--text-muted);
+}
+
+.about-copy {
+	display: block;
+}
+
+.about-copy h2 {
+	margin: 0 0 0.8rem;
+	font-size: 1.45rem;
+}
+
+.about-notes {
+	margin: 0;
+	padding: 1.2rem 1.2rem 1.2rem 2.4rem;
+	border-left: 2px solid var(--primary-color);
+	background: var(--surface-hover);
+	border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
 ul {
 	@apply pl-4;
 }
@@ -136,5 +211,15 @@ ul li {
 
 :link {
 	text-decoration: none;
+}
+
+@media (max-width: 560px) {
+	.about-card {
+		padding: 1rem;
+	}
+
+	.about-card-icon {
+		display: none;
+	}
 }
 </style>

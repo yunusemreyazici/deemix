@@ -50,30 +50,34 @@ function checkSectionResults(section) {
 </script>
 
 <template>
-	<section>
+	<section class="results-overview">
 		<ResultsError v-if="viewInfo.ERROR" :error="viewInfo.ERROR"></ResultsError>
-		<div v-else-if="!thereAreResults">
-			<h1 class="text-center">{{ t("search.noResults") }}</h1>
+		<div v-else-if="!thereAreResults" class="empty-state">
+			<h2>{{ t("search.noResults") }}</h2>
 		</div>
 
 		<template v-else>
 			<section
 				v-for="section in viewInfo.ORDER"
 				:key="section"
-				class="border-grayscale-500 float-none border-t py-5 first:border-t-0"
+				class="result-section"
 			>
 				<template v-if="checkSectionResults(section)">
-					<h2
-						class="mb-6 capitalize"
-						:class="{
-							'text-center text-4xl': section === 'TOP_RESULT',
-							'hover:text-primary inline-block cursor-pointer text-3xl transition-colors duration-200 ease-in-out':
-								section !== 'TOP_RESULT',
-						}"
-						@click="$emit('change-search-tab', section)"
-					>
-						{{ t(`globals.listTabs.${section.toLowerCase()}`, 2) }}
-					</h2>
+					<div class="result-section-heading">
+						<h2
+							class="capitalize"
+							:class="{
+								'result-heading-static': section === 'TOP_RESULT',
+								'result-heading-link': section !== 'TOP_RESULT',
+							}"
+							@click="$emit('change-search-tab', section)"
+						>
+							{{ t(`globals.listTabs.${section.toLowerCase()}`, 2) }}
+						</h2>
+						<i v-if="section !== 'TOP_RESULT'" class="material-icons"
+							>arrow_forward</i
+						>
+					</div>
 
 					<TopResult
 						v-if="section === 'TOP_RESULT'"
@@ -109,3 +113,64 @@ function checkSectionResults(section) {
 		</template>
 	</section>
 </template>
+
+<style scoped>
+.results-overview {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+	gap: 2.5rem;
+}
+
+.result-section {
+	min-width: 0;
+}
+
+.result-section + .result-section {
+	padding-top: 2.25rem;
+	border-top: 1px solid var(--border-subtle);
+}
+
+.result-section-heading {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	margin-bottom: 1.2rem;
+}
+
+.result-section-heading h2 {
+	margin: 0;
+	font-size: 1.35rem;
+	font-weight: 720;
+	letter-spacing: -0.02em;
+}
+
+.result-heading-link,
+.result-section-heading:has(.result-heading-link) {
+	cursor: pointer;
+}
+
+.result-section-heading:has(.result-heading-link):hover {
+	color: var(--primary-color);
+}
+
+.result-section-heading i {
+	font-size: 1.1rem;
+}
+
+.result-section :deep(.release-grid) {
+	display: grid;
+	grid-auto-columns: clamp(144px, 18vw, 178px);
+	grid-auto-flow: column;
+	grid-template-columns: none;
+	gap: 1.15rem;
+	overflow-x: auto;
+	padding: 2px 2px 14px;
+	scroll-snap-type: x proximity;
+	-webkit-overflow-scrolling: touch;
+}
+
+.result-section :deep(.release) {
+	scroll-snap-align: start;
+}
+</style>

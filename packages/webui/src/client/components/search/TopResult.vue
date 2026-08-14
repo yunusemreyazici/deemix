@@ -41,7 +41,7 @@ const fansNumber = computed(() => {
 </script>
 
 <template>
-	<div class="flex flex-col items-center justify-center">
+	<div class="top-result">
 		<router-link
 			v-slot="{ navigate }"
 			custom
@@ -50,9 +50,9 @@ const fansNumber = computed(() => {
 				params: { id: info.id },
 			}"
 		>
-			<div role="link" class="cursor-pointer" @click="navigate">
+			<div role="link" class="top-result-main cursor-pointer" @click="navigate">
 				<CoverContainer
-					class="h-40 w-40"
+					class="top-result-cover"
 					:is-rounded="info.type !== 'artist'"
 					:is-circle="info.type === 'artist'"
 					:cover="info.picture"
@@ -60,19 +60,72 @@ const fansNumber = computed(() => {
 					@click.stop="$emit('add-to-queue', $event)"
 				/>
 
-				<p
-					class="hover:text-primary mb-1 mt-4 text-center text-xl transition-colors duration-200 ease-in-out"
-				>
-					{{ info.title }}
-				</p>
+				<div class="top-result-copy">
+					<span class="top-result-kind">{{
+						t(`globals.listTabs.${info.type}`, 1)
+					}}</span>
+					<p>{{ info.title }}</p>
+					<span class="secondary-text">{{ fansNumber }}</span>
+				</div>
 			</div>
 		</router-link>
-
-		<p class="secondary-text mb-3 text-center">
-			{{ fansNumber }}
-		</p>
-		<span class="bg-primary rounded-xl p-1 px-2 text-center text-xs capitalize">
-			{{ t(`globals.listTabs.${info.type}`, 1) }}
-		</span>
 	</div>
 </template>
+
+<style scoped>
+.top-result {
+	display: flex;
+	min-height: 184px;
+	align-items: center;
+	padding: 1.15rem;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--radius-lg);
+	background: var(--secondary-background);
+}
+
+.top-result-main {
+	display: flex;
+	align-items: center;
+	gap: 1.4rem;
+}
+
+.top-result-cover {
+	width: 150px;
+	flex: 0 0 150px;
+}
+
+.top-result-copy {
+	min-width: 0;
+}
+
+.top-result-kind {
+	color: var(--primary-color);
+	font-size: 0.72rem;
+	font-weight: 750;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.top-result-copy p {
+	margin: 0.35rem 0 0.55rem;
+	font-size: clamp(1.6rem, 4vw, 2.65rem);
+	font-weight: 760;
+	letter-spacing: -0.04em;
+	line-height: 1.05;
+}
+
+@media (max-width: 560px) {
+	.top-result {
+		min-height: auto;
+	}
+
+	.top-result-cover {
+		width: 104px;
+		flex-basis: 104px;
+	}
+
+	.top-result-main {
+		gap: 1rem;
+	}
+}
+</style>

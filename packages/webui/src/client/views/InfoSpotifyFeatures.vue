@@ -5,8 +5,8 @@ const { t } = useI18n();
 </script>
 
 <template>
-	<div>
-		<h1 class="mb-8 text-5xl">{{ t("settings.spotify.question") }}</h1>
+	<div class="info-page page-shell">
+		<h1 class="page-title">{{ t("settings.spotify.question") }}</h1>
 		<p class="mb-2 text-base">
 			{{ t("settings.spotify.howTo.prologue.p1") }}<br />
 			{{ t("settings.spotify.howTo.prologue.p2") }}<br />

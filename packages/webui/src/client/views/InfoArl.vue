@@ -1,6 +1,6 @@
 <template>
-	<div>
-		<h1 class="mb-8 text-5xl">{{ t("settings.login.arl.question") }}</h1>
+	<div class="info-page page-shell">
+		<h1 class="page-title">{{ t("settings.login.arl.question") }}</h1>
 		<p class="mb-2 text-base">
 			{{ t("settings.login.arl.howTo.prologue.p1") }}<br />
 			{{ t("settings.login.arl.howTo.prologue.p2") }}<br />
