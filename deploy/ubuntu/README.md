@@ -36,9 +36,12 @@ node --version
 
 ## 2. Projeyi kurma
 
-Bu deponun Ubuntu sunucuda `/opt/deemix` konumunda olduğunu varsayıyoruz:
+Proje, `yunusemreyazici/deemix` forkundaki `main` dalından `/opt/deemix`
+konumuna klonlanır:
 
 ```bash
+sudo git clone --branch main --single-branch \
+  https://github.com/yunusemreyazici/deemix.git /opt/deemix
 cd /opt/deemix
 sudo pnpm install --frozen-lockfile
 sudo pnpm build
@@ -46,8 +49,25 @@ sudo chown -R root:root /opt/deemix
 sudo chmod -R a+rX /opt/deemix
 ```
 
-Güncelleme sonrasında `pnpm install` ve `pnpm build` komutlarını yeniden
-çalıştırıp servisi yeniden başlatın.
+Kurulumun doğru repoyu kullandığını kontrol edin:
+
+```bash
+sudo git -C /opt/deemix remote -v
+```
+
+Çıktıdaki `origin` adresi
+`https://github.com/yunusemreyazici/deemix.git` olmalıdır.
+
+Sunucuda daha önce başka bir deemix reposu klonlandıysa mevcut dosyaları
+yeniden indirmeden `origin` adresini bu forka çevirebilirsiniz:
+
+```bash
+sudo git -C /opt/deemix remote set-url origin \
+  https://github.com/yunusemreyazici/deemix.git
+sudo git -C /opt/deemix fetch origin main
+sudo git -C /opt/deemix checkout main
+sudo git -C /opt/deemix pull --ff-only origin main
+```
 
 ## 3. rclone ile Drive girişi
 
@@ -151,3 +171,31 @@ Betik Google Drive API hızını sınırlar, aktarımı tekilleştiren bir kilit
 kullanır ve geçici hatalarda yeniden dener. Yükleme başarısız olursa kaynak
 yerel diskte kalır. deemix, komut tamamlanana kadar sonraki kuyruk işini
 bekletebilir; bu, dosyanın yükleme sırasında değiştirilmesini önler.
+
+## Forktan güncelleme
+
+Yeni commitler `yunusemreyazici/deemix` reposunun `main` dalına gönderildikten
+sonra Ubuntu sunucudaki kurulumu şu komutlarla güncelleyin:
+
+```bash
+sudo git -C /opt/deemix pull --ff-only origin main
+sudo systemctl stop deemix
+
+cd /opt/deemix
+sudo pnpm install --frozen-lockfile
+sudo pnpm build
+
+sudo install -o root -g root -m 0755 \
+  deploy/ubuntu/deemix-to-drive /usr/local/bin/deemix-to-drive
+sudo install -o root -g root -m 0644 \
+  deploy/ubuntu/deemix.service /etc/systemd/system/deemix.service
+
+sudo chown -R root:root /opt/deemix
+sudo chmod -R a+rX /opt/deemix
+sudo systemctl daemon-reload
+sudo systemctl start deemix
+sudo systemctl status deemix --no-pager -l
+```
+
+Bu güncelleme adımları `/etc/deemix/deemix.env` dosyasının üzerine yazmaz;
+sunucuya özel kullanıcı adı, parola, Drive ve dizin ayarları korunur.
