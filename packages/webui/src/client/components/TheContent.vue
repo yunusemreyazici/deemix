@@ -79,7 +79,6 @@ onMounted(() => {
 	max-width: 1240px;
 	width: 100%;
 	padding: 38px clamp(24px, 4vw, 64px) 72px;
-	transform: scale(1);
 }
 
 main {
