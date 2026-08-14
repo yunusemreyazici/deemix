@@ -144,7 +144,7 @@ onMounted(() => {
 	width: 100%;
 	display: flex;
 	flex-direction: column;
-	overflow-x: hidden;
+	overflow-x: clip;
 }
 
 .search-shell {
@@ -259,7 +259,10 @@ onMounted(() => {
 	}
 
 	.content-container {
-		padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+		height: 100vh;
+		height: 100dvh;
+		min-height: 0;
+		padding-bottom: 0;
 	}
 
 	.search-shell {

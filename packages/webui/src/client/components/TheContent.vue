@@ -92,13 +92,17 @@ main {
 
 @media (max-width: 767px) {
 	main {
+		flex: 1 1 auto;
 		height: auto;
 		min-height: 0;
-		overflow-y: visible;
+		overflow-y: auto;
+		overscroll-behavior-y: contain;
+		scrollbar-gutter: auto;
+		-webkit-overflow-scrolling: touch;
 	}
 
 	#container {
-		padding: 24px 16px 44px;
+		padding: 24px 16px calc(120px + env(safe-area-inset-bottom, 0px));
 	}
 }
 
