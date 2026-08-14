@@ -125,21 +125,21 @@ const activeTabEmpty = computed(() => {
 </script>
 
 <template>
-	<div>
-		<h1 class="mb-8 text-5xl">
-			{{ t("favorites.title") }}
-			<div
+	<div class="favorites-page page-shell">
+		<header class="page-heading">
+			<h1>{{ t("favorites.title") }}</h1>
+			<button
 				ref="reloadButton"
+				type="button"
 				aria-label="reload"
-				class="inline-block cursor-pointer"
-				role="button"
+				class="icon-action"
 				@click="onRefreshFavorites"
 			>
 				<i :class="{ spin: isRefreshingFavorites }" class="material-icons"
 					>sync</i
 				>
-			</div>
-		</h1>
+			</button>
+		</header>
 
 		<BaseTabs>
 			<BaseTab
@@ -152,21 +152,22 @@ const activeTabEmpty = computed(() => {
 			</BaseTab>
 		</BaseTabs>
 
-		<button
-			v-if="!activeTabEmpty"
-			class="btn btn-primary"
-			style="margin-bottom: 2rem"
-			@click="downloadAllOfType"
-		>
-			{{
-				t("globals.download", {
-					thing: t(
-						`globals.listTabs.${state.activeTab}N`,
-						getActiveRelease().length
-					),
-				})
-			}}
-		</button>
+		<div class="favorites-toolbar">
+			<button
+				v-if="!activeTabEmpty"
+				class="btn btn-primary"
+				@click="downloadAllOfType"
+			>
+				{{
+					t("globals.download", {
+						thing: t(
+							`globals.listTabs.${state.activeTab}N`,
+							getActiveRelease().length
+						),
+					})
+				}}
+			</button>
+		</div>
 
 		<div v-show="state.activeTab === 'playlist'">
 			<div
@@ -401,3 +402,35 @@ const activeTabEmpty = computed(() => {
 		</div>
 	</div>
 </template>
+
+<style scoped>
+.icon-action {
+	display: grid;
+	width: 44px;
+	height: 44px;
+	place-items: center;
+	padding: 0;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--radius-md);
+	background: transparent;
+	color: var(--text-muted);
+	cursor: pointer;
+}
+
+.icon-action:hover {
+	background: var(--surface-hover);
+	color: var(--foreground);
+}
+
+.favorites-toolbar {
+	display: flex;
+	justify-content: flex-end;
+	margin-top: -0.8rem;
+}
+
+@media (max-width: 767px) {
+	.favorites-toolbar .btn {
+		width: 100%;
+	}
+}
+</style>

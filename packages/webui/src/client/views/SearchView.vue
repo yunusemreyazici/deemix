@@ -290,15 +290,23 @@ state.currentTab = state.tabs.find((tab) => tab.searchType === "all");
 </script>
 
 <template>
-	<div id="search_tab">
-		<div v-show="isQueryEmpty && !isSearching">
-			<h2>{{ t("search.startSearching") }}</h2>
-			<p>{{ t("search.description") }}</p>
+	<div id="search_tab" class="search-page page-shell">
+		<div v-show="isQueryEmpty && !isSearching" class="empty-state search-empty">
+			<div>
+				<i class="material-icons">search</i>
+				<h2>{{ t("search.startSearching") }}</h2>
+				<p>{{ t("search.description") }}</p>
+			</div>
 		</div>
 
 		<BaseLoadingPlaceholder text="Searching..." :hidden="!isSearching" />
 
-		<div v-show="!isQueryEmpty && !isSearching">
+		<div v-show="!isQueryEmpty && !isSearching" class="search-results">
+			<header class="page-heading search-heading">
+				<div>
+					<h1>{{ state.results.query }}</h1>
+				</div>
+			</header>
 			<BaseTabs>
 				<BaseTab
 					v-for="tab in state.tabs"
@@ -323,3 +331,27 @@ state.currentTab = state.tabs.find((tab) => tab.searchType === "all");
 		</div>
 	</div>
 </template>
+
+<style scoped>
+.search-empty {
+	min-height: min(55vh, 460px);
+}
+
+.search-empty i {
+	font-size: 2.4rem;
+	color: var(--primary-color);
+}
+
+.search-empty h2 {
+	margin: 0.7rem 0 0.35rem;
+}
+
+.search-empty p {
+	margin: 0;
+}
+
+.search-results,
+.search-heading {
+	min-width: 0;
+}
+</style>

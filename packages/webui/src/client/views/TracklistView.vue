@@ -157,13 +157,11 @@ onMounted(() => {
 	<div ref="root" class="fixed-footer bg-background-main image-header relative">
 		<header
 			:style="{
-				'background-image':
-					'linear-gradient(to bottom, transparent 0%, var(--main-background) 100%), url(\'' +
-					image +
-					'\')',
+				'background-image': `url('${image}')`,
 			}"
+			class="detail-hero"
 		>
-			<h1 class="m-0 flex items-center text-5xl">
+			<h1 class="m-0 flex items-center">
 				{{ title }}
 				<i v-if="explicit" class="material-icons title-icon title-icon--right"
 					>explicit</i

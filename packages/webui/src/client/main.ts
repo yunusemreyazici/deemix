@@ -1,4 +1,5 @@
 import { useAppInfoStore } from "@/stores/appInfo";
+import { useAuthStore } from "@/stores/auth";
 import { useLoginStore } from "@/stores/login";
 import { fetchData, postToServer } from "@/utils/api-utils";
 import { sendAddToQueue } from "@/utils/downloads";
@@ -35,6 +36,7 @@ app.use(i18n);
 app.mount("#app");
 
 async function startApp() {
+	socket.connect();
 	const connectResponse = await fetchData("connect");
 	const spotifyStatus = connectResponse.spotifyEnabled ? "enabled" : "disabled";
 
@@ -107,7 +109,13 @@ function initClient() {
 	setClientModeKeyBindings();
 }
 
-document.addEventListener("DOMContentLoaded", startApp);
+async function bootstrap() {
+	const authStore = useAuthStore(pinia);
+	await authStore.initialize();
+	if (authStore.authenticated) await startApp();
+}
+
+document.addEventListener("DOMContentLoaded", bootstrap);
 if (window.api) {
 	initClient();
 }

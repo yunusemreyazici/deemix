@@ -12,22 +12,76 @@ const hasSlimSidebar = computed(() => appInfoStore.hasSlimSidebar);
 
 <template>
 	<div
-		class="flex items-center justify-center gap-3 pb-6"
-		:class="{ 'h-auto flex-col pb-6': hasSlimSidebar }"
+		class="theme-picker"
+		:class="{ 'theme-picker--slim': hasSlimSidebar }"
 		aria-label="theme selector"
-		role="link"
 	>
-		<div
+		<button
 			v-for="theme of THEMES"
 			:key="theme"
-			class="size-6 cursor-pointer rounded-full border-0 border-neutral-500 transition-[border-width]"
+			type="button"
+			class="theme-swatch"
 			:class="{
-				'border-[3px]': currentTheme === theme,
-				'bg-white': theme === 'light',
-				'bg-[#141414]': theme === 'dark',
-				'bg-[#460eaf]': theme === 'purple',
+				active: currentTheme === theme,
+				'theme-swatch--light': theme === 'light',
+				'theme-swatch--dark': theme === 'dark',
+				'theme-swatch--purple': theme === 'purple',
 			}"
+			:aria-label="`Use ${theme} theme`"
+			:aria-pressed="currentTheme === theme"
 			@click="currentTheme = theme"
-		/>
+		></button>
 	</div>
 </template>
+
+<style scoped>
+.theme-picker {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	margin: 0 24px;
+	border-top: 1px solid var(--border-subtle);
+	padding: 24px 0;
+}
+
+.theme-picker--slim {
+	flex-direction: column;
+	margin-inline: 18px;
+}
+
+.theme-swatch {
+	width: 22px;
+	height: 22px;
+	border: 2px solid transparent;
+	border-radius: 999px;
+	padding: 0;
+	box-shadow: 0 0 0 1px var(--border-strong);
+	cursor: pointer;
+	transition:
+		transform 160ms ease,
+		box-shadow 160ms ease;
+}
+
+.theme-swatch:hover {
+	transform: scale(1.1);
+}
+
+.theme-swatch.active {
+	box-shadow:
+		0 0 0 2px var(--panels-background),
+		0 0 0 4px var(--primary-color);
+}
+
+.theme-swatch--light {
+	background: white;
+}
+
+.theme-swatch--dark {
+	background: #11151c;
+}
+
+.theme-swatch--purple {
+	background: #5d35d5;
+}
+</style>

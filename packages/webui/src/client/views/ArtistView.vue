@@ -53,7 +53,7 @@ const downloadLink = computed(
 	() => `https://www.deezer.com/artist/${unref(artistID)}`
 );
 const headerStyle = computed(() => ({
-	backgroundImage: `linear-gradient(to bottom, transparent 0%, var(--main-background) 100%), url(${state.artistPicture})`,
+	backgroundImage: `url(${state.artistPicture})`,
 }));
 
 const artistID = computed(() => router.currentRoute.value.params.id);
@@ -101,11 +101,11 @@ const sortedData = computed(() => {
 
 <template>
 	<div class="fixed-footer image-header relative">
-		<header class="flex items-center" :style="headerStyle">
+		<header class="detail-hero flex items-end" :style="headerStyle">
 			<h1 class="m-0">{{ state.artistName }}</h1>
 
 			<div
-				class="bg-primary text-grayscale-870 ml-auto grid h-16 w-16 cursor-pointer place-items-center rounded-full"
+				class="hero-download bg-primary text-grayscale-870 ml-auto grid cursor-pointer place-items-center rounded-full"
 				aria-label="download"
 				role="button"
 				:data-cm-link="downloadLink"

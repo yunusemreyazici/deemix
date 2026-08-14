@@ -83,20 +83,23 @@ watch(id, (newId) => {
 </script>
 
 <template>
-	<div>
-		<h1 class="mb-8 text-5xl">
-			{{ t("charts.title") }} {{ country ? `- ${country}` : "" }}
-		</h1>
+	<div class="charts-page page-shell">
+		<header class="page-heading">
+			<div>
+				<h1>{{ t("charts.title") }}</h1>
+				<p v-if="country">{{ country }}</p>
+			</div>
+		</header>
 
 		<div v-if="country === ''">
-			<div class="release-grid">
+			<div class="release-grid charts-grid">
 				<div
 					v-for="release in countries"
 					:key="release.id"
 					:aria-label="release.title"
 					:data-id="release.id"
 					:data-title="release.title"
-					class="release h-40 w-40 cursor-pointer"
+					class="release chart-card cursor-pointer"
 					role="button"
 					tabindex="0"
 					@click="getTrackList"
@@ -104,16 +107,21 @@ watch(id, (newId) => {
 				>
 					<img
 						:src="release.picture_medium"
-						class="coverart w-full rounded"
+						class="coverart chart-card-cover"
 						:alt="release.title"
 					/>
+					<div class="chart-card-copy">
+						<strong>{{ release.title }}</strong>
+						<span>{{ t("charts.title") }}</span>
+					</div>
 				</div>
 			</div>
 		</div>
 
 		<div v-else>
-			<div class="flex gap-x-1">
-				<button class="btn btn-primary" @click="onChangeCountry">
+			<div class="page-toolbar charts-toolbar">
+				<button class="btn btn-flat" @click="onChangeCountry">
+					<i class="material-icons">arrow_back</i>
 					{{ t("charts.changeCountry") }}
 				</button>
 				<button
@@ -122,6 +130,7 @@ watch(id, (newId) => {
 					@click.stop="addToQueue"
 				>
 					{{ t("charts.download") }}
+					<i class="material-icons">download</i>
 				</button>
 			</div>
 
@@ -202,3 +211,74 @@ watch(id, (newId) => {
 		</div>
 	</div>
 </template>
+
+<style scoped>
+.charts-grid {
+	grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+	gap: 1rem 0.75rem;
+}
+
+.chart-card {
+	min-width: 0;
+	border-radius: var(--radius-md);
+	transition:
+		background-color 180ms ease,
+		transform 180ms ease;
+}
+
+.chart-card:hover {
+	background: var(--surface-hover);
+	transform: translateY(-2px);
+}
+
+.chart-card-cover {
+	display: block;
+	width: 100%;
+	aspect-ratio: 1;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--radius-md);
+	object-fit: cover;
+}
+
+.chart-card-copy {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+	gap: 0.18rem;
+	padding: 0.72rem 0.2rem 0.35rem;
+}
+
+.chart-card-copy strong {
+	overflow: hidden;
+	font-size: 0.92rem;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.chart-card-copy span {
+	color: var(--text-muted);
+	font-size: 0.78rem;
+}
+
+.charts-toolbar .btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.table--charts {
+	margin-top: 1.2rem;
+}
+
+@media (max-width: 767px) {
+	.charts-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 1rem;
+	}
+
+	.charts-toolbar .btn {
+		flex: 1;
+		justify-content: center;
+	}
+}
+</style>

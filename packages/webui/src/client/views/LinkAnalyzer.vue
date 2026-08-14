@@ -1,28 +1,33 @@
 <template>
-	<div id="analyzer_tab" class="image-header">
-		<h1 class="mb-8 text-5xl capitalize">{{ t("sidebar.linkAnalyzer") }}</h1>
+	<div id="analyzer_tab" class="analyzer-page image-header page-shell">
+		<header class="page-heading analyzer-heading">
+			<h1 class="capitalize">{{ t("sidebar.linkAnalyzer") }}</h1>
+		</header>
 
-		<div v-if="link === ''">
-			<p>
-				{{ t("linkAnalyzer.info") }}
-			</p>
-			<p>
-				{{ t("linkAnalyzer.useful") }}
-			</p>
+		<div v-if="link === ''" class="analyzer-message">
+			<i class="material-icons">link</i>
+			<div>
+				<p>
+					{{ t("linkAnalyzer.info") }}
+				</p>
+				<p>
+					{{ t("linkAnalyzer.useful") }}
+				</p>
+			</div>
 		</div>
-		<div v-else-if="link === 'error'">
-			<h2>{{ t("linkAnalyzer.linkNotSupported") }}</h2>
-			<p>{{ t("linkAnalyzer.linkNotSupportedYet") }}</p>
+		<div v-else-if="link === 'error'" class="analyzer-message error">
+			<i class="material-icons">link_off</i>
+			<div>
+				<h2>{{ t("linkAnalyzer.linkNotSupported") }}</h2>
+				<p>{{ t("linkAnalyzer.linkNotSupportedYet") }}</p>
+			</div>
 		</div>
 
 		<div v-else>
 			<header
 				class="flex items-center"
 				:style="{
-					'background-image':
-						'linear-gradient(to bottom, transparent 0%, var(--main-background) 100%), url(\'' +
-						image +
-						'\')',
+					'background-image': `url('${image}')`,
 				}"
 			>
 				<div>
@@ -90,7 +95,7 @@
 					role="button"
 					aria-label="download"
 					:data-link="link"
-					class="bg-primary text-grayscale-870 ml-auto grid h-16 w-16 cursor-pointer place-items-center rounded-full"
+					class="hero-download bg-primary text-grayscale-870 ml-auto grid cursor-pointer place-items-center rounded-full"
 					@click.stop="addToQueue"
 				>
 					<!-- @contextmenu.prevent="openQualityModal" -->
@@ -332,3 +337,45 @@ onMounted(() => {
 	emitter.on("analyze_notSupported", notSupported);
 });
 </script>
+
+<style scoped>
+.analyzer-heading {
+	display: block;
+	min-height: auto;
+	padding: 0;
+	border: 0;
+	background: none;
+}
+
+.analyzer-heading::before {
+	display: none;
+}
+
+.analyzer-message {
+	display: flex;
+	align-items: flex-start;
+	gap: 1rem;
+	padding: 1.35rem;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--radius-lg);
+	background: var(--secondary-background);
+}
+
+.analyzer-message > i {
+	color: var(--primary-color);
+	font-size: 1.65rem;
+}
+
+.analyzer-message h2,
+.analyzer-message p:first-child {
+	margin-top: 0;
+}
+
+.analyzer-message p:last-child {
+	margin-bottom: 0;
+}
+
+.analyzer-message.error > i {
+	color: hsl(3, 82%, 66%);
+}
+</style>

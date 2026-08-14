@@ -75,35 +75,34 @@ onMounted(() => {
 
 <style>
 #container {
-	--container-width: 95%;
-	margin: 0 auto;
-	max-width: 1280px;
-	width: var(--container-width);
-	transform: scale(1);
-}
-@media only screen and (min-width: 601px) {
-	#container {
-		--container-width: 85%;
-	}
-}
-@media only screen and (min-width: 993px) {
-	#container {
-		--container-width: 70%;
-	}
+	margin: 0;
+	max-width: 1240px;
+	width: 100%;
+	padding: 38px clamp(24px, 4vw, 64px) 72px;
 }
 
 main {
 	background-color: var(--main-background);
-	padding-right: 5px;
 	width: 100%;
-	height: calc(100vh - 93px);
+	height: calc(100vh - 75px);
 	overflow-y: scroll;
 	overflow-x: hidden;
+	scrollbar-gutter: stable;
 }
 
 @media (max-width: 767px) {
 	main {
-		height: calc(100dvh - 93px - env(safe-area-inset-bottom, 0px));
+		flex: 1 1 auto;
+		height: auto;
+		min-height: 0;
+		overflow-y: auto;
+		overscroll-behavior-y: contain;
+		scrollbar-gutter: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	#container {
+		padding: 24px 16px calc(120px + env(safe-area-inset-bottom, 0px));
 	}
 }
 
@@ -117,7 +116,7 @@ main::-webkit-scrollbar-track {
 
 main::-webkit-scrollbar-thumb {
 	background: var(--main-scroll);
-	border-radius: 4px;
+	border-radius: 999px;
 	width: 6px;
 	padding: 0px 2px;
 }

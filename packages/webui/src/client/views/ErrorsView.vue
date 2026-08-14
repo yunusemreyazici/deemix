@@ -39,40 +39,46 @@ const downloadBitrate = computed(() => {
 </script>
 
 <template>
-	<div>
-		<h1 class="mb-8 text-5xl">{{ t("errors.title", { name: title }) }}</h1>
+	<div class="errors-page page-shell">
+		<header class="page-heading">
+			<h1>{{ t("errors.title", { name: title }) }}</h1>
+		</header>
 
-		<table v-if="errors.length >= 1" class="table--tracklist table">
-			<tbody>
-				<tr>
-					<th>ID</th>
-					<th class="uppercase-first-letter">
-						{{ t("globals.listTabs.artist", 1) }}
-					</th>
-					<th class="uppercase-first-letter">
-						{{ t("globals.listTabs.title", 1) }}
-					</th>
-					<th class="uppercase-first-letter">
-						{{ t("globals.listTabs.error", 1) }}
-					</th>
-				</tr>
-				<tr v-for="error in errors" :key="error.data.id">
-					<td>{{ error.data.id }}</td>
-					<td>{{ error.data.artist }}</td>
-					<td>{{ error.data.title }}</td>
-					<td>
-						<span :title="error.stack">
-							{{
-								error.errid
-									? t(`errors.ids.${error.errid}`, { bitrate: downloadBitrate })
-									: error.message
-							}}
-						</span>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-		<div v-if="postErrors.length >= 1">
+		<div v-if="errors.length >= 1" class="error-table-wrap">
+			<table class="table--tracklist table">
+				<tbody>
+					<tr>
+						<th>ID</th>
+						<th class="uppercase-first-letter">
+							{{ t("globals.listTabs.artist", 1) }}
+						</th>
+						<th class="uppercase-first-letter">
+							{{ t("globals.listTabs.title", 1) }}
+						</th>
+						<th class="uppercase-first-letter">
+							{{ t("globals.listTabs.error", 1) }}
+						</th>
+					</tr>
+					<tr v-for="error in errors" :key="error.data.id">
+						<td>{{ error.data.id }}</td>
+						<td>{{ error.data.artist }}</td>
+						<td>{{ error.data.title }}</td>
+						<td>
+							<span :title="error.stack">
+								{{
+									error.errid
+										? t(`errors.ids.${error.errid}`, {
+												bitrate: downloadBitrate,
+											})
+										: error.message
+								}}
+							</span>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<section v-if="postErrors.length >= 1" class="post-errors">
 			<h2>{{ t("errors.postTitle") }}</h2>
 			<table class="table--tracklist table">
 				<tbody>
@@ -100,6 +106,23 @@ const downloadBitrate = computed(() => {
 					</tr>
 				</tbody>
 			</table>
-		</div>
+		</section>
 	</div>
 </template>
+
+<style scoped>
+.error-table-wrap,
+.post-errors {
+	overflow: hidden;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--radius-lg);
+	background: var(--secondary-background);
+}
+
+.post-errors h2 {
+	margin: 0;
+	padding: 1.2rem;
+	border-bottom: 1px solid var(--border-subtle);
+	font-size: 1.2rem;
+}
+</style>
