@@ -1,4 +1,10 @@
 import { DeemixApp } from "@/deemixApp.js";
+import {
+	authConfig,
+	isAuthenticated,
+	registerAuthRoutes,
+	requireApiAuth,
+} from "@/auth.js";
 import { logger, removeOldLogs } from "@/helpers/logger.js";
 import { loadLoginCredentials } from "@/helpers/loginStorage.js";
 import cookieParser from "cookie-parser";
@@ -39,6 +45,17 @@ const isSingleUser =
 
 const app: Express = express();
 
+const configuredSessionSecret = process.env.DEEMIX_SESSION_SECRET;
+if (
+	authConfig.enabled &&
+	(!configuredSessionSecret || configuredSessionSecret.length < 32)
+) {
+	throw new Error(
+		"DEEMIX_SESSION_SECRET must contain at least 32 characters when authentication is enabled"
+	);
+}
+const sessionSecret = configuredSessionSecret || "U2hoLCBpdHMgYSBzZWNyZXQh";
+
 if (isSingleUser) loadLoginCredentials();
 
 app.set("isSingleUser", isSingleUser);
@@ -62,17 +79,32 @@ const deemixApp = new DeemixApp(listener);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(
-	// @ts-expect-error
-	session({
-		store: new MemoryStore({
-			checkPeriod: 86400000, // prune expired entries every 24h
-		}),
-		secret: "U2hoLCBpdHMgYSBzZWNyZXQh",
-		resave: true,
-		saveUninitialized: true,
-	})
-);
+const sessionParser = session({
+	store: new MemoryStore({
+		checkPeriod: 86400000, // prune expired entries every 24h
+	}),
+	name: "deemix.sid",
+	secret: sessionSecret,
+	resave: false,
+	saveUninitialized: true,
+	cookie: {
+		httpOnly: true,
+		sameSite: "lax",
+		secure: "auto",
+	},
+});
+
+app.set("trust proxy", 1);
+app.use(sessionParser);
+
+registerAuthRoutes(app);
+app.use((req, res, next) => {
+	if (/\/api(?:\/|$)/.test(req.path)) {
+		requireApiAuth(req, res, next);
+		return;
+	}
+	next();
+});
 
 if (process.env.NODE_ENV === "development") {
 	app.use(morgan("dev"));
@@ -93,7 +125,22 @@ const server = app.listen({
 	port: normalizePort(serverPort),
 	host: deemixHost,
 });
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ noServer: true });
+
+server.on("upgrade", (request, socket, head) => {
+	// express-session supports parsing the upgrade request with a response stub.
+	sessionParser(request as any, {} as any, () => {
+		if (!isAuthenticated((request as any).session)) {
+			socket.write("HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n");
+			socket.destroy();
+			return;
+		}
+
+		wss.handleUpgrade(request, socket, head, (ws) => {
+			wss.emit("connection", ws, request);
+		});
+	});
+});
 
 if (process.env.NODE_ENV === "production") {
 	const publicPath = join(dirname(fileURLToPath(import.meta.url)), "public");

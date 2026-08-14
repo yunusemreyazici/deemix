@@ -4,6 +4,7 @@ import ThemePicker from "@/components/ThemePicker.vue";
 import { mainNavItems } from "@/data/sidebar";
 import { pinia } from "@/stores";
 import { useAppInfoStore } from "@/stores/appInfo";
+import { useAuthStore } from "@/stores/auth";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
@@ -11,6 +12,7 @@ import { useRoute } from "vue-router";
 const { t } = useI18n();
 const route = useRoute();
 const appInfoStore = useAppInfoStore(pinia);
+const authStore = useAuthStore(pinia);
 
 const updateAvailable = computed(() => appInfoStore.updateAvailable);
 const hasSlimSidebar = computed(() => appInfoStore.hasSlimSidebar);
@@ -95,5 +97,17 @@ function handleNavClick() {
 		</nav>
 
 		<ThemePicker />
+
+		<button
+			v-if="authStore.enabled"
+			type="button"
+			class="hover:bg-background-main text-foreground flex h-14 w-full items-center border-0 bg-transparent px-4"
+			:class="{ 'justify-center': hasSlimSidebar }"
+			aria-label="Sign out"
+			@click="authStore.logout"
+		>
+			<i class="material-icons p-2 text-2xl">logout</i>
+			<span v-if="!hasSlimSidebar" class="ml-3">Sign out</span>
+		</button>
 	</aside>
 </template>

@@ -73,6 +73,32 @@ sudo install -o root -g root -m 0644 \
 sudo install -o root -g deemix -m 0640 \
   deploy/ubuntu/deemix.env.example /etc/deemix/deemix.env
 
+# Generate a password hash without storing the plain password in shell history.
+read -rsp 'deemix password: ' DEEMIX_PASSWORD; printf '\n'
+printf '%s' "$DEEMIX_PASSWORD" | \
+  /usr/bin/node packages/webui/scripts/hash-password.mjs
+unset DEEMIX_PASSWORD
+
+# Generate the Express session signing secret.
+openssl rand -hex 32
+```
+
+Copy the generated values into `/etc/deemix/deemix.env`:
+
+```ini
+DEEMIX_AUTH_USERNAME=yunus
+DEEMIX_AUTH_PASSWORD_HASH=scrypt:GENERATED_SALT:GENERATED_DIGEST
+DEEMIX_SESSION_SECRET=GENERATED_64_CHARACTER_SECRET
+```
+
+The password hash and session secret are different values. Authentication is
+disabled when all three entries are empty. A partially configured login causes
+the service to stop instead of starting without protection.
+
+Continue with the service setup:
+
+```bash
+
 sudo systemctl daemon-reload
 sudo systemctl enable --now deemix
 sudo systemctl status deemix
@@ -85,8 +111,10 @@ adresini dinler. Kendi bilgisayarınızdan güvenli biçimde açmak için:
 ssh -L 6595:127.0.0.1:6595 ubuntu@SUNUCU_IP
 ```
 
-Ardından tarayıcıda `http://127.0.0.1:6595` adresine gidin. API'de ayrıca
-kimlik doğrulama katmanı olmadığı için portu doğrudan internete açmayın.
+Ardından tarayıcıda `http://127.0.0.1:6595` adresine gidin. Yapılandırdıysanız
+önce deemix kullanıcı adı ve parola ekranı açılır. Uygulama API uçlarını ve
+WebSocket bağlantısını aynı oturum çereziyle korur. Portu yine de doğrudan
+internete açmayın; Nginx veya başka bir TLS reverse proxy arkasında tutun.
 
 ## 5. deemix ayarı
 

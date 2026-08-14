@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AuthLogin from "@/components/AuthLogin.vue";
 import TheDownloadBar from "@/components/downloads/TheDownloadBar.vue";
 import BaseLoadingPlaceholder from "@/components/globals/BaseLoadingPlaceholder.vue";
 import DeezerWarning from "@/components/globals/DeezerWarning.vue";
@@ -10,10 +11,12 @@ import TheSearchBar from "@/components/TheSearchBar.vue";
 import TheSidebar from "@/components/TheSidebar.vue";
 import { pinia } from "@/stores";
 import { useAppInfoStore } from "@/stores/appInfo";
+import { useAuthStore } from "@/stores/auth";
 import { socket } from "@/utils/socket";
 import { onMounted, ref } from "vue";
 
 const appInfoStore = useAppInfoStore(pinia);
+const authStore = useAuthStore(pinia);
 
 const isSocketConnected = ref(false);
 const loadingText = ref("Connecting to local server...");
@@ -38,7 +41,17 @@ onMounted(() => {
 
 <template>
 	<div id="app">
-		<div class="app-container">
+		<AuthLogin
+			v-if="authStore.ready && authStore.enabled && !authStore.authenticated"
+		/>
+
+		<BaseLoadingPlaceholder
+			v-else-if="!authStore.ready"
+			text="Checking authentication..."
+			additional-classes="absolute top-0 left-0 w-screen h-screen bg-background-main z-50"
+		/>
+
+		<div v-else class="app-container">
 			<TheSidebar />
 
 			<div class="content-container">
@@ -65,6 +78,7 @@ onMounted(() => {
 		</div>
 
 		<BaseLoadingPlaceholder
+			v-if="authStore.authenticated"
 			:text="loadingText"
 			:hidden="isSocketConnected"
 			additional-classes="absolute top-0 left-0 w-screen h-screen bg-black bg-opacity-50 z-50"

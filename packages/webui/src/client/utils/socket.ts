@@ -1,39 +1,55 @@
-class CustomSocket extends WebSocket {
-	listeners: Record<string, (this: WebSocket, ev: MessageEvent<any>) => any>;
+class CustomSocket extends EventTarget {
+	private socket: WebSocket | null = null;
+	private listeners: Record<string, (data: any) => any> = {};
 
-	constructor(args: string | URL) {
-		super(args);
-		this.listeners = {};
+	get readyState() {
+		return this.socket?.readyState ?? WebSocket.CLOSED;
+	}
+
+	connect() {
+		if (
+			this.socket?.readyState === WebSocket.OPEN ||
+			this.socket?.readyState === WebSocket.CONNECTING
+		)
+			return;
+
+		this.socket = new WebSocket(
+			(location.protocol === "https:" ? "wss://" : "ws://") +
+				location.host +
+				"/"
+		);
+		this.socket.addEventListener("open", () => {
+			this.dispatchEvent(new Event("open"));
+		});
+		this.socket.addEventListener("error", () => {
+			this.dispatchEvent(new Event("error"));
+		});
+		this.socket.addEventListener("close", () => {
+			this.dispatchEvent(new Event("close"));
+		});
+		this.socket.addEventListener("message", (event) => {
+			const messageData = JSON.parse(event.data);
+			this.listeners[messageData.key]?.(messageData.data);
+		});
 	}
 
 	emit(key: string, data?: any) {
 		if (this.readyState !== WebSocket.OPEN) return false;
 
-		this.send(JSON.stringify({ key, data }));
+		this.socket?.send(JSON.stringify({ key, data }));
 	}
 
-	on(key: string, cb: (ev: any) => any) {
+	on(key: string, cb: (data: any) => any) {
 		if (!Object.keys(this.listeners).includes(key)) {
 			this.listeners[key] = cb;
-
-			this.addEventListener("message", (event) => {
-				const messageData = JSON.parse(event.data);
-
-				if (messageData.key === key) {
-					cb(messageData.data);
-				}
-			});
 		}
 	}
 
 	off(key: string) {
 		if (Object.keys(this.listeners).includes(key)) {
-			this.removeEventListener("message", this.listeners[key]);
 			delete this.listeners[key];
 		}
 	}
 }
 
-export const socket = new CustomSocket(
-	(location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/"
-);
+export const socket = new CustomSocket();

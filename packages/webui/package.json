@@ -11,6 +11,7 @@
 		"build:3-aliases": "tsc-alias -p src/server/tsconfig.json",
 		"build:4-version": "genversion -fe dist/helpers/web-version.js",
 		"start": "cross-env NODE_ENV=production node dist/main.js",
+		"hash-password": "node scripts/hash-password.mjs",
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"testlang": "node ./src/client/tests/testlang.js",
