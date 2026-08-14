@@ -38,14 +38,12 @@ onMounted(async () => {
 
 <template>
 	<div id="home_tab">
-		<h1 class="mb-8 text-5xl">{{ t("globals.welcome") }}</h1>
+		<header class="home-heading">
+			<h1>{{ t("globals.welcome") }}</h1>
+		</header>
 
-		<section
-			v-if="!isLoggedIn"
-			ref="notLogged"
-			class="border-grayscale-500 border-0 border-t border-solid py-6"
-		>
-			<p id="home_not_logged_text" class="mb-4">{{ t("home.needTologin") }}</p>
+		<section v-if="!isLoggedIn" ref="notLogged" class="home-intro">
+			<p id="home_not_logged_text">{{ t("home.needTologin") }}</p>
 			<router-link
 				v-slot="{ navigate }"
 				custom
@@ -63,12 +61,9 @@ onMounted(async () => {
 			</router-link>
 		</section>
 
-		<section
-			v-if="playlists.length"
-			class="border-grayscale-500 border-0 border-t border-solid py-6"
-		>
-			<h2 class="mb-6 text-3xl">{{ t("home.sections.popularPlaylists") }}</h2>
-			<div class="release-grid">
+		<section v-if="playlists.length" class="home-section">
+			<h2>{{ t("home.sections.popularPlaylists") }}</h2>
+			<div class="home-media-rail">
 				<router-link
 					v-for="release in playlists"
 					:key="release.id"
@@ -82,7 +77,7 @@ onMounted(async () => {
 				>
 					<div
 						role="link"
-						class="release cursor-pointer"
+						class="release home-release cursor-pointer"
 						@click="navigate"
 						@keypress.enter="() => navigate()"
 					>
@@ -106,12 +101,9 @@ onMounted(async () => {
 			</div>
 		</section>
 
-		<section
-			v-if="albums.length"
-			class="border-grayscale-500 border-0 border-t border-solid py-6"
-		>
-			<h2 class="mb-6 text-3xl">{{ t("home.sections.popularAlbums") }}</h2>
-			<div class="release-grid">
+		<section v-if="albums.length" class="home-section">
+			<h2>{{ t("home.sections.popularAlbums") }}</h2>
+			<div class="home-media-rail">
 				<router-link
 					v-for="release in albums"
 					:key="release.id"
@@ -126,7 +118,7 @@ onMounted(async () => {
 				>
 					<div
 						role="link"
-						class="release cursor-pointer"
+						class="release home-release cursor-pointer"
 						@click="navigate"
 						@keypress.enter="() => navigate()"
 					>
@@ -146,3 +138,114 @@ onMounted(async () => {
 		</section>
 	</div>
 </template>
+
+<style scoped>
+#home_tab {
+	width: 100%;
+}
+
+.home-heading h1 {
+	margin: 0;
+	font-size: clamp(2.5rem, 5vw, 4rem);
+	font-weight: 760;
+	letter-spacing: -0.055em;
+	line-height: 1.04;
+}
+
+.home-intro,
+.home-section {
+	border-top: 1px solid var(--border-subtle);
+}
+
+.home-intro {
+	margin-top: 26px;
+	padding: 22px 0 28px;
+}
+
+.home-intro p {
+	max-width: 640px;
+	margin: 0 0 18px;
+	color: var(--text-muted);
+	font-size: 1.02rem;
+	line-height: 1.65;
+}
+
+.home-section {
+	padding: 28px 0 24px;
+}
+
+.home-section h2 {
+	margin: 0 0 20px;
+	font-size: clamp(1.45rem, 2vw, 1.9rem);
+	font-weight: 720;
+	letter-spacing: -0.035em;
+	line-height: 1.2;
+}
+
+.home-media-rail {
+	display: grid;
+	grid-auto-columns: clamp(190px, 22vw, 260px);
+	grid-auto-flow: column;
+	gap: clamp(18px, 2.2vw, 30px);
+	overflow-x: auto;
+	padding: 2px 2px 16px;
+	scroll-snap-type: x proximity;
+	scrollbar-color: var(--main-scroll) transparent;
+}
+
+.home-release {
+	min-width: 0;
+	scroll-snap-align: start;
+}
+
+.home-release .primary-text {
+	margin: 12px 0 3px;
+	overflow: hidden;
+	color: var(--foreground);
+	font-size: 0.98rem;
+	font-weight: 600;
+	letter-spacing: -0.018em;
+	line-height: 1.4;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.home-release .secondary-text {
+	margin: 0;
+	color: var(--text-muted);
+	font-size: 0.84rem;
+	line-height: 1.5;
+	opacity: 1;
+}
+
+@media (max-width: 767px) {
+	.home-heading h1 {
+		font-size: 2rem;
+		letter-spacing: -0.045em;
+	}
+
+	.home-intro {
+		margin-top: 22px;
+		padding-block: 20px 24px;
+	}
+
+	.home-section {
+		padding-block: 24px 20px;
+	}
+
+	.home-media-rail {
+		grid-auto-columns: minmax(148px, 44vw);
+		gap: 16px;
+		margin-right: -16px;
+		padding-right: 16px;
+	}
+
+	.home-release .primary-text {
+		font-size: 0.92rem;
+		white-space: normal;
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+	}
+}
+</style>

@@ -20,9 +20,14 @@ const authStore = useAuthStore(pinia);
 
 const isSocketConnected = ref(false);
 const loadingText = ref("Connecting to local server...");
+const isMobileUtilityMenuOpen = ref(false);
 
-function toggleMobileSidebar() {
-	appInfoStore.toggleMobileSidebar();
+function toggleMobileDownloads() {
+	appInfoStore.toggleMobileDownloads();
+}
+
+function toggleMobileUtilityMenu() {
+	isMobileUtilityMenuOpen.value = !isMobileUtilityMenuOpen.value;
 }
 
 onMounted(() => {
@@ -55,19 +60,53 @@ onMounted(() => {
 			<TheSidebar />
 
 			<div class="content-container">
-				<!-- Mobile header with hamburger -->
-				<div class="mobile-header">
-					<button
-						class="hamburger-btn"
-						aria-label="Toggle menu"
-						@click="toggleMobileSidebar"
-					>
-						<svg viewBox="0 0 24 24">
-							<rect x="3" y="5" width="18" height="2" rx="1" />
-							<rect x="3" y="11" width="18" height="2" rx="1" />
-							<rect x="3" y="17" width="18" height="2" rx="1" />
-						</svg>
-					</button>
+				<header class="mobile-topbar">
+					<router-link :to="{ name: 'Home' }" class="mobile-brand">
+						<img src="@/assets/deemix-icon.svg?url" alt="" />
+						<span>dee<span>mix</span></span>
+					</router-link>
+
+					<div class="mobile-topbar-actions">
+						<button
+							type="button"
+							class="mobile-downloads-button"
+							aria-label="Open downloads"
+							@click="toggleMobileDownloads"
+						>
+							<i class="material-icons">download</i>
+							<span>Downloads</span>
+						</button>
+						<button
+							type="button"
+							class="mobile-overflow-button"
+							aria-label="Open account menu"
+							:aria-expanded="isMobileUtilityMenuOpen"
+							@click="toggleMobileUtilityMenu"
+						>
+							<i class="material-icons">more_vert</i>
+						</button>
+					</div>
+
+					<div v-if="isMobileUtilityMenuOpen" class="mobile-utility-menu">
+						<router-link
+							:to="{ name: 'About' }"
+							@click="isMobileUtilityMenuOpen = false"
+						>
+							<i class="material-icons">info</i>
+							<span>About</span>
+						</router-link>
+						<button
+							v-if="authStore.enabled"
+							type="button"
+							@click="authStore.logout"
+						>
+							<i class="material-icons">logout</i>
+							<span>Sign out</span>
+						</button>
+					</div>
+				</header>
+
+				<div class="search-shell">
 					<TheSearchBar />
 				</div>
 				<DeezerWarning />
@@ -94,69 +133,143 @@ onMounted(() => {
 <style>
 .app-container {
 	display: flex;
+	width: 100%;
 	min-height: 100vh;
-	min-height: 100dvh; /* Dynamic viewport height for mobile */
+	min-height: 100dvh;
+	background: var(--main-background);
 }
 
 .content-container {
+	min-width: 0;
 	width: 100%;
 	display: flex;
 	flex-direction: column;
 	overflow-x: hidden;
 }
 
-/* Mobile header with hamburger + search bar */
-.mobile-header {
+.search-shell {
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	padding: 10px;
+	padding: 20px clamp(20px, 3vw, 48px) 0;
 }
 
-.mobile-header #search {
+.search-shell #search {
 	flex: 1;
 	margin: 0;
 }
 
-.hamburger-btn {
+.mobile-topbar {
 	display: none;
-	width: 48px;
-	height: 48px;
-	padding: 12px;
-	border: none;
-	background: var(--secondary-background);
-	border-radius: 15px;
+}
+
+.mobile-brand {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	color: var(--foreground);
+	font-size: 1.35rem;
+	font-weight: 800;
+	letter-spacing: -0.045em;
+	text-decoration: none;
+}
+
+.mobile-brand img {
+	width: 38px;
+	height: 38px;
+}
+
+.mobile-brand > span > span {
+	color: var(--primary-color);
+}
+
+.mobile-topbar-actions,
+.mobile-downloads-button,
+.mobile-overflow-button {
+	display: flex;
+	align-items: center;
+}
+
+.mobile-topbar-actions {
+	gap: 4px;
+}
+
+.mobile-downloads-button,
+.mobile-overflow-button {
+	min-height: 44px;
+	border: 0;
+	background: transparent;
+	color: var(--foreground);
 	cursor: pointer;
-	flex-shrink: 0;
 }
 
-.hamburger-btn svg {
-	width: 24px;
-	height: 24px;
-	fill: var(--foreground);
+.mobile-downloads-button {
+	gap: 7px;
+	padding: 0 8px;
+	font-size: 0.875rem;
+	font-weight: 650;
 }
 
-/* Mobile: show hamburger, add bottom padding */
+.mobile-overflow-button {
+	width: 40px;
+	justify-content: center;
+	padding: 0;
+}
+
+.mobile-utility-menu {
+	position: absolute;
+	top: 64px;
+	right: 16px;
+	z-index: 60;
+	width: 170px;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--radius-md);
+	background: var(--secondary-background);
+	box-shadow: var(--panel-shadow);
+	padding: 6px;
+}
+
+.mobile-utility-menu a,
+.mobile-utility-menu button {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	min-height: 44px;
+	border: 0;
+	border-radius: var(--radius-sm);
+	background: transparent;
+	padding: 0 10px;
+	color: var(--foreground);
+	text-decoration: none;
+}
+
+.mobile-utility-menu a:hover,
+.mobile-utility-menu button:hover {
+	background: var(--surface-hover);
+}
+
 @media (max-width: 767px) {
-	.hamburger-btn {
+	.mobile-topbar {
+		position: relative;
 		display: flex;
 		align-items: center;
-		justify-content: center;
+		justify-content: space-between;
+		min-height: 68px;
+		padding: 10px 16px 6px;
 	}
 
 	.content-container {
-		padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+		padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+	}
+
+	.search-shell {
+		padding: 8px 16px 12px;
 	}
 }
 
-/* Desktop: restore original search bar margin */
-@media (min-width: 768px) {
-	.mobile-header {
-		padding: 0;
-	}
-
-	.mobile-header #search {
-		margin: 10px 10px 20px 10px;
+@media (max-width: 339px) {
+	.mobile-downloads-button span {
+		display: none;
 	}
 }
 </style>

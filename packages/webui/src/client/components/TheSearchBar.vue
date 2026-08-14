@@ -135,7 +135,7 @@ onUnmounted(() => {
 
 <template>
 	<header id="search" aria-label="searchbar" :class="{ showSearchButton }">
-		<div v-show="!showSearchButton" class="search__icon hidden md:block">
+		<div v-show="!showSearchButton" class="search__icon">
 			<i class="material-icons">search</i>
 		</div>
 
@@ -175,36 +175,43 @@ input[type="search"]::-webkit-search-cancel-button {
 
 #search {
 	background-color: var(--secondary-background);
-	padding: 0 1em;
+	min-height: 54px;
+	padding: 0 18px;
 	display: flex;
 	align-items: center;
-	border: 1px solid transparent;
-	transition: border 200ms ease-in-out;
-	border-radius: 15px;
-	margin: 10px 10px 20px 10px;
+	border: 1px solid var(--border-strong);
+	transition:
+		border-color 180ms ease,
+		box-shadow 180ms ease;
+	border-radius: var(--radius-md);
 	overflow: hidden;
+	box-shadow: 0 10px 30px hsla(220, 45%, 2%, 0.08);
 }
 #search .search__icon {
-	width: 2rem;
-	height: 2rem;
+	display: flex;
+	width: 1.75rem;
+	height: 1.75rem;
+	align-items: center;
+	justify-content: center;
 }
 #search .search__icon i {
-	font-size: 2rem;
-	color: var(--foreground);
+	font-size: 1.55rem;
+	color: var(--text-muted);
 }
 #search .search__icon i::selection {
 	background: none;
 }
 #search #searchbar {
-	height: 45px;
-	padding-left: 0.5em;
+	height: 52px;
+	padding-left: 0.75rem;
 	border: 0px;
 	border-radius: 0px;
 	background-color: var(--secondary-background);
 	color: var(--foreground);
-	font-size: 1.2rem;
-	font-family: "Open Sans";
-	font-weight: 300;
+	font-size: 1rem;
+	font-family: inherit;
+	font-weight: 450;
+	letter-spacing: -0.015em;
 	margin-bottom: 0;
 }
 #search #searchbar:focus {
@@ -242,9 +249,23 @@ input[type="search"]::-webkit-search-cancel-button {
 	background: none;
 }
 #search:focus-within {
-	border: 1px solid var(--foreground);
+	border-color: var(--primary-color);
+	box-shadow: 0 0 0 3px
+		color-mix(in srgb, var(--primary-color) 16%, transparent);
 }
 #search.showSearchButton {
 	padding: 0 0 0 1em;
+}
+
+@media (max-width: 767px) {
+	#search {
+		min-height: 52px;
+		padding-inline: 14px;
+	}
+
+	#search #searchbar {
+		height: 50px;
+		font-size: 0.95rem;
+	}
 }
 </style>

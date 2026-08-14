@@ -401,31 +401,13 @@ onUnmounted(() => {
 		@click="toggleMobileDownloads"
 	></div>
 
-	<!-- Mobile FAB button (when sheet is closed) -->
-	<button
-		v-if="!isMobileDownloadsOpen"
-		class="bg-primary fixed right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full border-2 border-white/30 shadow-lg md:hidden"
-		style="bottom: calc(1rem + env(safe-area-inset-bottom, 0px))"
-		aria-label="Open downloads"
-		@click="toggleMobileDownloads"
-	>
-		<i class="material-icons text-2xl text-white">download</i>
-		<span
-			v-if="queueCount > 0"
-			class="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white"
-		>
-			{{ queueCount > 9 ? "9+" : queueCount }}
-		</span>
-	</button>
-
 	<!-- Mobile bottom sheet -->
 	<section
-		class="bg-panels-bg text-foreground fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl transition-transform duration-300 ease-in-out md:hidden"
+		class="mobile-download-sheet"
 		:class="{
 			'translate-y-full': !isMobileDownloadsOpen,
 			'translate-y-0': isMobileDownloadsOpen,
 		}"
-		style="height: 60vh"
 		aria-label="downloads"
 	>
 		<!-- Mobile sheet handle -->
@@ -504,9 +486,13 @@ onUnmounted(() => {
 			@click.prevent="toggleDownloadTab"
 		></i>
 
+		<strong v-show="isExpanded" class="download-panel-title">
+			{{ t("downloads") }}
+		</strong>
+
 		<!-- Queue buttons -->
 		<div
-			class="absolute right-0 top-0 transition-all duration-200 ease-in-out"
+			class="download-panel-actions"
 			:class="{
 				'invisible opacity-0': !isExpanded,
 				'visible opacity-100': isExpanded,
@@ -558,8 +544,11 @@ onUnmounted(() => {
 
 <style scoped>
 #toggle_download_tab {
+	position: relative;
+	z-index: 2;
 	width: 25px;
 	height: 25px;
+	color: var(--text-muted);
 }
 #toggle_download_tab::before {
 	font-family: "Material Icons";
@@ -580,9 +569,75 @@ onUnmounted(() => {
 	line-height: 2rem;
 }
 
+#download_tab_container {
+	position: relative;
+	min-width: 32px;
+	border-left: 1px solid var(--border-subtle);
+	background: var(--panels-background);
+	box-shadow: -16px 0 42px hsla(220, 45%, 2%, 0.1);
+}
+
+.download-panel-title {
+	position: absolute;
+	top: 19px;
+	left: 48px;
+	font-size: 1rem;
+	font-weight: 700;
+	text-transform: capitalize;
+}
+
+.download-panel-actions {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	display: flex;
+	gap: 2px;
+	color: var(--text-muted);
+	transition:
+		opacity 180ms ease,
+		visibility 180ms ease;
+}
+
+.download-panel-actions i {
+	padding: 7px;
+	border-radius: var(--radius-sm);
+	transition:
+		color 160ms ease,
+		background-color 160ms ease;
+}
+
+.download-panel-actions i:hover {
+	background: var(--surface-hover);
+	color: var(--foreground);
+}
+
+.mobile-download-sheet {
+	position: fixed;
+	z-index: 50;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	display: none;
+	height: min(70vh, 620px);
+	border: 1px solid var(--border-subtle);
+	border-bottom: 0;
+	border-radius: 20px 20px 0 0;
+	background: var(--panels-background);
+	box-shadow: 0 -28px 72px hsla(220, 45%, 2%, 0.5);
+	color: var(--foreground);
+	transition: transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (max-width: 767px) {
+	.mobile-download-sheet {
+		display: block;
+	}
+}
+
 #download_list {
-	height: calc(100% - 32px);
-	padding-left: 28px;
+	height: calc(100% - 58px);
+	margin-top: 28px;
+	padding: 18px 12px 12px 32px;
 	overflow-y: scroll;
 }
 #download_list::-webkit-scrollbar {

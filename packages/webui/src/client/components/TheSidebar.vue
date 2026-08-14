@@ -16,77 +16,45 @@ const authStore = useAuthStore(pinia);
 
 const updateAvailable = computed(() => appInfoStore.updateAvailable);
 const hasSlimSidebar = computed(() => appInfoStore.hasSlimSidebar);
-const isMobileSidebarOpen = computed(() => appInfoStore.isMobileSidebarOpen);
-
-function closeSidebar() {
-	appInfoStore.closeMobileSidebar();
-}
-
-function handleNavClick() {
-	// Close sidebar on mobile after navigation
-	appInfoStore.closeMobileSidebar();
-}
+const mobileNavItems = computed(() =>
+	mainNavItems.filter((item) => item.name !== "about")
+);
 </script>
 
 <template>
-	<!-- Mobile backdrop overlay -->
-	<div
-		v-if="isMobileSidebarOpen"
-		class="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden"
-		@click="closeSidebar"
-	></div>
-
 	<aside
-		class="bg-panels-bg text-foreground left-0 top-0 flex h-screen flex-col transition-transform duration-300 ease-in-out md:relative md:translate-x-0"
+		class="desktop-sidebar"
 		:class="{
-			'slim-sidebar w-20': hasSlimSidebar,
-			'min-w-56': !hasSlimSidebar,
-			'fixed z-50 -translate-x-full': !isMobileSidebarOpen,
-			'fixed z-50 translate-x-0': isMobileSidebarOpen,
-			'md:flex': true,
+			'slim-sidebar': hasSlimSidebar,
 		}"
 		aria-label="sidebar"
 		role="navigation"
 	>
 		<router-link
 			:to="{ name: 'Home' }"
-			class="flex w-full justify-center"
-			@click="handleNavClick"
+			class="sidebar-brand"
+			:class="{ 'sidebar-brand--slim': hasSlimSidebar }"
 		>
-			<img
-				src="@/assets/deemix-icon.svg?url"
-				alt="deemix-icon"
-				class="mx-auto"
-				:class="{
-					'my-2 w-14': hasSlimSidebar,
-					'my-5 w-24': !hasSlimSidebar,
-				}"
-			/>
+			<img src="@/assets/deemix-icon.svg?url" alt="" />
+			<span v-if="!hasSlimSidebar">dee<span>mix</span></span>
 		</router-link>
 
-		<nav className="flex flex-col grow">
+		<nav class="sidebar-nav">
 			<router-link
 				v-for="link in mainNavItems"
 				:key="link.name"
 				:aria-label="link.name"
-				class="hover:bg-background-main text-foreground group relative flex h-16 w-full items-center px-4 no-underline"
+				class="sidebar-nav-link"
 				:class="{
-					'bg-background-main': route.name === link.routerName,
-					'justify-center': hasSlimSidebar,
+					active: route.name === link.routerName,
+					'sidebar-nav-link--slim': hasSlimSidebar,
 				}"
 				:to="{ name: link.routerName }"
-				@click="handleNavClick"
 			>
-				<i
-					:class="{ 'text-primary': route.name === link.routerName }"
-					class="material-icons side_icon group-hover:text-primary p-2 text-3xl"
-				>
+				<i class="material-icons side_icon">
 					{{ link.icon }}
 				</i>
-				<span
-					:class="{ hidden: hasSlimSidebar }"
-					class="whitespace-no-wrap ml-3 overflow-hidden capitalize"
-				>
+				<span v-if="!hasSlimSidebar" class="sidebar-nav-label">
 					{{ t(link.label) }}
 				</span>
 				<span
@@ -101,13 +69,189 @@ function handleNavClick() {
 		<button
 			v-if="authStore.enabled"
 			type="button"
-			class="hover:bg-background-main text-foreground flex h-14 w-full items-center border-0 bg-transparent px-4"
-			:class="{ 'justify-center': hasSlimSidebar }"
+			class="sidebar-signout"
+			:class="{ 'sidebar-signout--slim': hasSlimSidebar }"
 			aria-label="Sign out"
 			@click="authStore.logout"
 		>
-			<i class="material-icons p-2 text-2xl">logout</i>
-			<span v-if="!hasSlimSidebar" class="ml-3">Sign out</span>
+			<i class="material-icons">logout</i>
+			<span v-if="!hasSlimSidebar">Sign out</span>
 		</button>
 	</aside>
+
+	<nav class="mobile-bottom-nav" aria-label="Primary navigation">
+		<router-link
+			v-for="link in mobileNavItems"
+			:key="link.name"
+			:to="{ name: link.routerName }"
+			:aria-label="t(link.label)"
+			:class="{ active: route.name === link.routerName }"
+		>
+			<i class="material-icons">{{ link.icon }}</i>
+			<span>{{ t(link.label) }}</span>
+		</router-link>
+	</nav>
 </template>
+
+<style scoped>
+.desktop-sidebar {
+	position: relative;
+	z-index: 20;
+	display: flex;
+	flex: 0 0 284px;
+	width: 284px;
+	height: 100vh;
+	height: 100dvh;
+	flex-direction: column;
+	border-right: 1px solid var(--border-subtle);
+	background: var(--panels-background);
+	color: var(--foreground);
+	transition:
+		width 220ms ease,
+		flex-basis 220ms ease;
+}
+
+.desktop-sidebar.slim-sidebar {
+	flex-basis: 84px;
+	width: 84px;
+}
+
+.sidebar-brand {
+	display: flex;
+	align-items: center;
+	gap: 13px;
+	min-height: 102px;
+	padding: 20px 24px;
+	color: var(--foreground);
+	font-size: 1.75rem;
+	font-weight: 800;
+	letter-spacing: -0.055em;
+	text-decoration: none;
+}
+
+.sidebar-brand img {
+	width: 48px;
+	height: 48px;
+	flex: 0 0 auto;
+}
+
+.sidebar-brand > span > span {
+	color: var(--primary-color);
+}
+
+.sidebar-brand--slim {
+	justify-content: center;
+	padding-inline: 0;
+}
+
+.sidebar-nav {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 6px;
+	padding: 8px 16px;
+}
+
+.sidebar-nav-link,
+.sidebar-signout {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	min-height: 52px;
+	border: 1px solid transparent;
+	border-radius: var(--radius-md);
+	background: transparent;
+	padding: 0 16px;
+	color: var(--text-muted);
+	font-size: 0.95rem;
+	font-weight: 560;
+	text-decoration: none;
+	cursor: pointer;
+	transition:
+		color 160ms ease,
+		background-color 160ms ease,
+		border-color 160ms ease;
+}
+
+.sidebar-nav-link:hover,
+.sidebar-signout:hover {
+	background: var(--surface-hover);
+	color: var(--foreground);
+}
+
+.sidebar-nav-link.active {
+	border-color: color-mix(in srgb, var(--primary-color) 24%, transparent);
+	background: color-mix(in srgb, var(--primary-color) 14%, transparent);
+	color: var(--foreground);
+}
+
+.sidebar-nav-link.active .material-icons {
+	color: var(--primary-color);
+}
+
+.sidebar-nav-link .material-icons,
+.sidebar-signout .material-icons {
+	width: 24px;
+	font-size: 24px;
+	text-align: center;
+}
+
+.sidebar-nav-link--slim,
+.sidebar-signout--slim {
+	justify-content: center;
+	padding-inline: 0;
+}
+
+.sidebar-signout {
+	margin: 8px 16px 18px;
+	width: calc(100% - 32px);
+}
+
+.mobile-bottom-nav {
+	display: none;
+}
+
+@media (max-width: 767px) {
+	.desktop-sidebar {
+		display: none;
+	}
+
+	.mobile-bottom-nav {
+		position: fixed;
+		z-index: 45;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		display: grid;
+		grid-template-columns: repeat(5, minmax(0, 1fr));
+		border-top: 1px solid var(--border-subtle);
+		background: color-mix(in srgb, var(--panels-background) 94%, transparent);
+		box-shadow: 0 -12px 36px hsla(220, 35%, 2%, 0.28);
+		padding: 7px 4px calc(7px + env(safe-area-inset-bottom, 0px));
+		backdrop-filter: blur(18px);
+	}
+
+	.mobile-bottom-nav a {
+		display: flex;
+		min-width: 0;
+		min-height: 56px;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 2px;
+		border-radius: var(--radius-sm);
+		color: var(--text-muted);
+		font-size: 0.68rem;
+		font-weight: 600;
+		text-decoration: none;
+	}
+
+	.mobile-bottom-nav a.active {
+		color: var(--primary-color);
+	}
+
+	.mobile-bottom-nav .material-icons {
+		font-size: 24px;
+	}
+}
+</style>

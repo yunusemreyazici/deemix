@@ -25,7 +25,10 @@ async function submit() {
 <template>
 	<main class="auth-page">
 		<section class="auth-card" aria-labelledby="auth-title">
-			<img src="@/assets/deemix-icon.svg?url" alt="deemix" class="auth-logo" />
+			<div class="auth-brand">
+				<img src="@/assets/deemix-icon.svg?url" alt="" class="auth-logo" />
+				<span>dee<span>mix</span></span>
+			</div>
 			<h1 id="auth-title">Sign in to deemix</h1>
 			<p>Enter the credentials configured by the server administrator.</p>
 
@@ -67,36 +70,50 @@ async function submit() {
 	min-height: 100vh;
 	min-height: 100dvh;
 	place-items: center;
-	background:
-		radial-gradient(circle at top, hsla(210, 100%, 52%, 0.14), transparent 38%),
-		var(--main-background);
+	background: var(--main-background);
 	padding: 24px;
 }
 
 .auth-card {
-	width: min(100%, 400px);
-	border: 1px solid hsla(0, 0%, 100%, 0.08);
-	border-radius: 16px;
+	width: min(100%, 420px);
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--radius-lg);
 	background: var(--panels-background);
-	box-shadow: 0 24px 70px hsla(0, 0%, 0%, 0.32);
-	padding: 32px;
+	box-shadow: var(--panel-shadow);
+	padding: clamp(28px, 5vw, 42px);
+}
+
+.auth-brand {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	margin-bottom: 28px;
+	font-size: 1.55rem;
+	font-weight: 800;
+	letter-spacing: -0.05em;
+}
+
+.auth-brand > span > span {
+	color: var(--primary-color);
 }
 
 .auth-logo {
-	display: block;
-	width: 72px;
-	margin: 0 auto 24px;
+	width: 44px;
+	height: 44px;
 }
 
 h1 {
 	margin: 0;
 	text-align: center;
-	font-size: 1.5rem;
+	font-size: 1.8rem;
+	font-weight: 740;
+	letter-spacing: -0.035em;
 }
 
 .auth-card > p {
 	margin: 10px 0 28px;
-	opacity: 0.7;
+	color: var(--text-muted);
 	text-align: center;
 	line-height: 1.5;
 }
@@ -105,19 +122,46 @@ label {
 	display: block;
 	margin: 16px 0 7px;
 	font-size: 0.875rem;
-	font-weight: 600;
+	font-weight: 650;
+}
+
+input {
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--radius-sm) !important;
+	transition:
+		border-color 160ms ease,
+		box-shadow 160ms ease;
+}
+
+input:focus {
+	border-color: var(--primary-color);
+	outline: none;
+	box-shadow: 0 0 0 3px
+		color-mix(in srgb, var(--primary-color) 14%, transparent);
 }
 
 button {
 	width: 100%;
 	margin-top: 24px;
 	border: 0;
-	border-radius: 8px;
+	min-height: 46px;
+	border-radius: var(--radius-sm);
 	background: var(--primary-color);
 	padding: 13px 18px;
 	color: white;
 	font-weight: 700;
 	cursor: pointer;
+	transition:
+		filter 160ms ease,
+		transform 120ms ease;
+}
+
+button:hover {
+	filter: brightness(1.08);
+}
+
+button:active {
+	transform: translateY(1px);
 }
 
 button:disabled {
